@@ -6,10 +6,6 @@ import Unauthorized from './components/Auth/Unauthorized';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
-import { registerLicense } from '@syncfusion/ej2-base';
-
-// Register Syncfusion license
-registerLicense('YOUR_SYNCFUSION_LICENSE_KEY');
 
 function App() {
     return (

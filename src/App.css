@@ -1,18 +1,43 @@
-@import '../node_modules/@syncfusion/ej2-base/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-buttons/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-inputs/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-popups/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-lists/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-navigations/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-splitbuttons/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-dropdowns/styles/material.css';
-@import "../node_modules/@syncfusion/ej2-documenteditor/styles/material.css";
+@import url("https://cdn.syncfusion.com/ej2/material.css");
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Reset styles for document editor */
+.document-editor-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.document-editor-wrapper .e-documenteditor {
+  height: 100%;
+}
+
+.document-editor-wrapper .e-documenteditor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+/* Override any conflicting styles */
+.e-documenteditor-container * {
+  box-sizing: content-box;
+}
+
+.e-documenteditor-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Remove any padding that might affect the layout */
+.e-documenteditor-container .e-de-content {
+  background: white;
 }
 
 .logo {
@@ -49,4 +74,74 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Ensure Syncfusion styles take precedence for the editor */
+.document-editor-wrapper .e-documenteditor-container * {
+  font-family: inherit;
+}
+
+/* Fix button styles */
+.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn {
+  height: auto;
+  margin: 0;
+  min-height: auto;
+  min-width: auto;
+  padding: 3px 6px;
+}
+
+.e-toolbar .e-toolbar-items {
+  background: #f8f9fa;
+  padding: 4px;
+}
+
+.e-toolbar .e-toolbar-items .e-toolbar-item {
+  height: auto;
+  margin: 2px;
+}
+
+/* Fix dropdown styles */
+.e-toolbar .e-toolbar-items .e-toolbar-item .e-dropdown-btn {
+  height: auto;
+  padding: 3px 8px;
+}
+
+/* Fix icons in buttons */
+.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn .e-icons {
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+  line-height: 16px;
+}
+
+/* Fix dialog styles */
+.e-dialog {
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.e-dialog .e-dlg-header {
+  padding: 12px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.e-dialog .e-dlg-content {
+  padding: 20px 24px;
+}
+
+/* Fix popup styles */
+.e-popup {
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Fix dropdown list styles */
+.e-dropdownbase .e-list-item {
+  line-height: 32px;
+  padding: 0 12px;
+}
+
+/* Remove any conflicting Material-UI styles */
+.document-editor-wrapper .MuiButton-root {
+  display: none;
 }

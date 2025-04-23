@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
     Box, 
     Button, 
@@ -15,8 +15,9 @@ import {
 } from '@mui/material';
 import Layout from '../common/Layout';
 import DocumentList from './DocumentList';
+import DocumentEditor, { DocumentEditorRef } from '../DocumentEditor/DocumentEditor';
 import { Document } from '../../types';
-import { updateDocument, addApprovers } from '../../services/api';
+import { updateDocument, addApprovers, getDocument } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
@@ -26,6 +27,9 @@ const Dashboard: React.FC = () => {
     const [approverEmail, setApproverEmail] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const editorRef = useRef<DocumentEditorRef>(null);
     const [snackbar, setSnackbar] = useState<{
         open: boolean;
         message: string;
@@ -36,8 +40,35 @@ const Dashboard: React.FC = () => {
         severity: 'success'
     });
 
+    const refreshDocument = useCallback(async (documentId: string) => {
+        try {
+            setIsLoading(true);
+            const refreshedDoc = await getDocument(documentId);
+            setSelectedDocument(refreshedDoc);
+            // Trigger document list refresh
+            setRefreshTrigger(prev => prev + 1);
+        } catch (error) {
+            console.error('Failed to refresh document:', error);
+            setSnackbar({
+                open: true,
+                message: 'Failed to refresh document',
+                severity: 'error'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     const handleDocumentSelect = async (document: Document) => {
-        setSelectedDocument(document);
+        // If a document is already selected and it's different from the new selection
+        if (selectedDocument && selectedDocument._id !== document._id) {
+            // Clear the current document first
+            setSelectedDocument(null);
+            // Then fetch the fresh content of the new document
+            await refreshDocument(document._id);
+        } else {
+            setSelectedDocument(document);
+        }
         
         // If user is reviewer and document status is new or pending, update to in_progress
         if (user?.role === 'reviewer' && 
@@ -47,10 +78,7 @@ const Dashboard: React.FC = () => {
                     status: 'in_progress',
                     notes: 'Document opened for review'
                 });
-                setSelectedDocument({
-                    ...document,
-                    status: 'in_progress' as const
-                });
+                await refreshDocument(document._id);
             } catch (error) {
                 console.error('Failed to update document status:', error);
             }
@@ -58,22 +86,25 @@ const Dashboard: React.FC = () => {
     };
 
     const handleSave = async () => {
-        if (!selectedDocument) return;
+        if (!selectedDocument || !editorRef.current) return;
 
         setIsSaving(true);
         try {
+            await editorRef.current.save();
+            
+            // Update document status
             await updateDocument(selectedDocument._id, {
                 status: user?.role === 'reviewer' ? 'changes_made' : 'in_progress',
                 notes: user?.role === 'reviewer' ? 'Document marked as reviewed' : 'Document sent back for review'
             });
+
+            // Refresh the document to get the latest content and trigger list refresh
+            await refreshDocument(selectedDocument._id);
+
             setSnackbar({
                 open: true,
                 message: 'Document saved successfully',
                 severity: 'success'
-            });
-            setSelectedDocument({
-                ...selectedDocument,
-                status: user?.role === 'reviewer' ? 'changes_made' as const : 'in_progress' as const
             });
         } catch (error) {
             console.error('Failed to save document:', error);
@@ -96,14 +127,14 @@ const Dashboard: React.FC = () => {
                 status: 'approved',
                 notes: 'Document approved'
             });
+
+            // Refresh the document and trigger list refresh
+            await refreshDocument(selectedDocument._id);
+
             setSnackbar({
                 open: true,
                 message: 'Document approved successfully',
                 severity: 'success'
-            });
-            setSelectedDocument({
-                ...selectedDocument,
-                status: 'approved' as const
             });
         } catch (error) {
             console.error('Failed to approve document:', error);
@@ -219,12 +250,14 @@ const Dashboard: React.FC = () => {
         <Layout>
             <Box sx={{ 
                 display: 'flex', 
+                flexDirection: 'row',
                 height: '100%',
             }}>
                 <Box sx={{ width: '300px', height: '100vh' }}>
                     <DocumentList
                         onDocumentSelect={handleDocumentSelect}
                         selectedDocument={selectedDocument || undefined}
+                        refreshTrigger={refreshTrigger}
                     />
                 </Box>
                 <Box sx={{ 
@@ -261,34 +294,58 @@ const Dashboard: React.FC = () => {
                             <Box sx={{ 
                                 flexGrow: 1, 
                                 backgroundColor: 'white',
-                                p: 3,
-                                overflow: 'auto'
+                                p: 0,
+                                overflow: 'hidden'
                             }}>
                                 <Paper 
                                     elevation={0} 
                                     sx={{ 
-                                        p: 3, 
-                                        minHeight: '100%',
-                                        backgroundColor: 'grey.50'
+                                        height: '100%',
+                                        backgroundColor: 'grey.50',
+                                        position: 'relative'
                                     }}
                                 >
-                                    <Typography variant="body1" component="div">
-                                        {selectedDocument.content ? (
-                                            <iframe
-                                                src={`data:application/pdf;base64,${selectedDocument.content}`}
-                                                style={{
-                                                    width: '100%',
-                                                    height: 'calc(100vh - 200px)',
-                                                    border: 'none'
-                                                }}
-                                                title="Document Viewer"
-                                            />
-                                        ) : (
-                                            <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
-                                                No content available
-                                            </Box>
-                                        )}
-                                    </Typography>
+                                    {isLoading && (
+                                        <Box
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                right: 0,
+                                                bottom: 0,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                zIndex: 1
+                                            }}
+                                        >
+                                            <CircularProgress />
+                                        </Box>
+                                    )}
+                                    <DocumentEditor 
+                                        ref={editorRef}
+                                        documentId={selectedDocument?._id}
+                                        content={selectedDocument?.content}
+                                        userRole={user?.role}
+                                        documentStatus={selectedDocument?.status}
+                                        key={selectedDocument?._id}
+                                        onSaveSuccess={() => {
+                                            setSnackbar({
+                                                open: true,
+                                                message: 'Document content saved',
+                                                severity: 'success'
+                                            });
+                                        }}
+                                        onSaveError={(error) => {
+                                            console.error('Save error:', error);
+                                            setSnackbar({
+                                                open: true,
+                                                message: 'Failed to save document content',
+                                                severity: 'error'
+                                            });
+                                        }}
+                                    />
                                 </Paper>
                             </Box>
                         </>
@@ -298,7 +355,7 @@ const Dashboard: React.FC = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                height: '100%',
+                                height: '100vh',
                                 backgroundColor: 'background.paper',
                             }}
                         >

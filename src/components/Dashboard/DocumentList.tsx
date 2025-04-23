@@ -13,6 +13,7 @@ import {
     InputLabel,
     SelectChangeEvent,
     Divider,
+    CircularProgress
 } from '@mui/material';
 import { Document, DocumentStatus } from '../../types';
 import { getDocuments } from '../../services/api';
@@ -21,37 +22,52 @@ import StatusPill from '../common/StatusPill';
 interface DocumentListProps {
     onDocumentSelect: (document: Document) => void;
     selectedDocument?: Document;
+    refreshTrigger: number;
 }
 
 const DocumentList: React.FC<DocumentListProps> = ({
     onDocumentSelect,
     selectedDocument,
+    refreshTrigger
 }) => {
     const [documents, setDocuments] = useState<Document[]>([]);
-    const [error, setError] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'ALL'>('ALL');
 
     useEffect(() => {
         const fetchDocuments = async () => {
+            setIsLoading(true);
+            setError(null);
             try {
                 const docs = await getDocuments(statusFilter === 'ALL' ? undefined : statusFilter);
                 setDocuments(docs);
             } catch (err) {
+                console.error('Failed to fetch documents:', err);
                 setError('Failed to load documents');
-                console.error('Error fetching documents:', err);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         fetchDocuments();
-    }, [statusFilter]);
+    }, [statusFilter, refreshTrigger]);
 
     const handleStatusFilterChange = (event: SelectChangeEvent<DocumentStatus | 'ALL'>) => {
         setStatusFilter(event.target.value as DocumentStatus | 'ALL');
     };
 
+    if (isLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
     if (error) {
         return (
-            <Box p={2}>
+            <Box sx={{ p: 2 }}>
                 <Typography color="error">{error}</Typography>
             </Box>
         );
