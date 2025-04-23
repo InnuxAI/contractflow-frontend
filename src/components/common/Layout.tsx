@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Box, AppBar, Toolbar, Typography, IconButton } from '@mui/material';
-import { Logout as LogoutIcon, Person as PersonIcon } from '@mui/icons-material';
+import { Box, AppBar, Toolbar, Typography, IconButton, Button } from '@mui/material';
+import { Brightness4, Brightness7, Logout as LogoutIcon, Person as PersonIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
@@ -10,6 +11,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
     const { logout, user } = useAuth();
+    const { mode, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -22,12 +24,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <AppBar 
-                position="fixed" 
-                sx={{ 
-                    zIndex: (theme) => theme.zIndex.drawer + 1,
-                    backgroundColor: '#1976d2',
+                position="static" 
+                elevation={0}
+                sx={{
+                    bgcolor: 'background.paper',
+                    borderBottom: 1,
+                    borderColor: 'divider'
                 }}
             >
                 <Toolbar>
@@ -36,77 +40,64 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         component="div" 
                         sx={{ 
                             flexGrow: 1,
-                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontWeight: 600
                         }}
                     >
                         Document Review System
                     </Typography>
                     {user && (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 2,
-                            mr: 1
-                        }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1,
-                                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                                px: 2,
-                                py: 0.75,
-                                borderRadius: 1,
-                                minWidth: '200px',
-                            }}>
-                                <PersonIcon sx={{ fontSize: 20, opacity: 0.9 }} />
-                                <Box sx={{ overflow: 'hidden' }}>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            fontWeight: 500,
-                                            lineHeight: 1.2,
-                                            color: 'white',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        {user.email}
-                                    </Typography>
-                                    <Typography 
-                                        variant="caption" 
-                                        sx={{ 
-                                            display: 'block',
-                                            color: 'rgba(255, 255, 255, 0.8)',
-                                            textTransform: 'capitalize'
-                                        }}
-                                    >
-                                        {user.role}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            <IconButton 
-                                color="inherit" 
-                                onClick={handleLogout}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Typography 
+                                variant="body2" 
                                 sx={{ 
-                                    '&:hover': { 
-                                        backgroundColor: 'rgba(255, 255, 255, 0.1)' 
-                                    } 
+                                    color: 'text.secondary',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5
                                 }}
                             >
-                                <LogoutIcon />
+                                {user.email}
+                                <Typography
+                                    component="span"
+                                    variant="caption"
+                                    sx={{
+                                        bgcolor: 'primary.main',
+                                        color: 'primary.contrastText',
+                                        px: 1,
+                                        py: 0.5,
+                                        borderRadius: 1,
+                                        ml: 1,
+                                        textTransform: 'capitalize'
+                                    }}
+                                >
+                                    {user.role}
+                                </Typography>
+                            </Typography>
+                            <IconButton 
+                                onClick={toggleTheme}
+                                sx={{ color: 'text.primary' }}
+                            >
+                                {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
                             </IconButton>
+                            <Button
+                                variant="outlined"
+                                onClick={handleLogout}
+                                startIcon={<LogoutIcon />}
+                                size="small"
+                            >
+                                Logout
+                            </Button>
                         </Box>
                     )}
                 </Toolbar>
             </AppBar>
-            <Box
-                component="main"
-                sx={{
+            <Box 
+                component="main" 
+                sx={{ 
                     flexGrow: 1,
-                    height: '100vh',
-                    pt: '64px',
-                    backgroundColor: '#f5f5f5',
+                    bgcolor: 'background.default',
+                    height: '100%'
                 }}
             >
                 {children}

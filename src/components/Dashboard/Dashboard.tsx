@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
                 display: 'flex', 
                 height: '100%',
             }}>
-                <Box sx={{ width: '300px', height: '100%' }}>
+                <Box sx={{ width: '300px', height: '100vh' }}>
                     <DocumentList
                         onDocumentSelect={handleDocumentSelect}
                         selectedDocument={selectedDocument || undefined}

@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './theme';
+import { CssBaseline } from '@mui/material';
 import Login from './components/Auth/Login';
 import Dashboard from './components/Dashboard/Dashboard';
 import Unauthorized from './components/Auth/Unauthorized';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { registerLicense } from '@syncfusion/ej2-base';
 
@@ -13,7 +13,7 @@ registerLicense('YOUR_SYNCFUSION_LICENSE_KEY');
 
 function App() {
     return (
-        <ThemeProvider theme={theme}>
+        <ThemeProvider>
             <CssBaseline />
             <AuthProvider>
                 <Router>
