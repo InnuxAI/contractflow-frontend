@@ -1,0 +1,52 @@
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.14",
+    "@mui/material": "^5.15.14",
+    "@syncfusion/ej2-react-documenteditor": "^24.1.41",
+    "@syncfusion/ej2-react-base": "^24.1.41",
+    "@syncfusion/ej2-base": "^24.1.41",
+    "@syncfusion/ej2-build": "^24.1.41",
+    "@syncfusion/ej2-buttons": "^24.1.41",
+    "@syncfusion/ej2-compression": "^24.1.41",
+    "@syncfusion/ej2-data": "^24.1.41",
+    "@syncfusion/ej2-dropdowns": "^24.1.41",
+    "@syncfusion/ej2-file-utils": "^24.1.41",
+    "@syncfusion/ej2-inputs": "^24.1.41",
+    "@syncfusion/ej2-lists": "^24.1.41",
+    "@syncfusion/ej2-navigations": "^24.1.41",
+    "@syncfusion/ej2-popups": "^24.1.41",
+    "@syncfusion/ej2-splitbuttons": "^24.1.41",
+    "@syncfusion/ej2-documenteditor": "^24.1.41",
+    "@syncfusion/ej2-charts": "^24.1.41",
+    "axios": "^1.6.8",
+    "jwt-decode": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@types/react": "^18.2.67",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "~5.4.2",
+    "typescript-eslint": "^8.26.1",
+    "vite": "^6.3.1"
+  }
+}
