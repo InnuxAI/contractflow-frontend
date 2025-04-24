@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { 
     Box, 
     Button, 
@@ -29,6 +29,7 @@ const Dashboard: React.FC = () => {
     const [isApproving, setIsApproving] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [showEditor, setShowEditor] = useState(true);
     const editorRef = useRef<DocumentEditorRef>(null);
     const [snackbar, setSnackbar] = useState<{
         open: boolean;
@@ -90,9 +91,10 @@ const Dashboard: React.FC = () => {
 
         setIsSaving(true);
         try {
+            // First save the document content
             await editorRef.current.save();
             
-            // Update document status
+            // Then update document status
             await updateDocument(selectedDocument._id, {
                 status: user?.role === 'reviewer' ? 'changes_made' : 'in_progress',
                 notes: user?.role === 'reviewer' ? 'Document marked as reviewed' : 'Document sent back for review'
@@ -103,7 +105,7 @@ const Dashboard: React.FC = () => {
 
             setSnackbar({
                 open: true,
-                message: 'Document saved successfully',
+                message: user?.role === 'reviewer' ? 'Document saved successfully' : 'Document sent back for review',
                 severity: 'success'
             });
         } catch (error) {
@@ -119,10 +121,12 @@ const Dashboard: React.FC = () => {
     };
 
     const handleApprove = async () => {
-        if (!selectedDocument) return;
+        if (!selectedDocument || !editorRef.current) return;
 
         setIsApproving(true);
         try {
+            // First save the document content
+            await editorRef.current.save();
             await updateDocument(selectedDocument._id, {
                 status: 'approved',
                 notes: 'Document approved'
@@ -174,6 +178,19 @@ const Dashboard: React.FC = () => {
         setSnackbar({ ...snackbar, open: false });
     };
 
+    const handleOpenAssignDialog = () => {
+        setShowEditor(false);
+        setIsAssignDialogOpen(true);
+    };
+
+    const handleCloseAssignDialog = () => {
+        setIsAssignDialogOpen(false);
+        // Add a small delay before remounting the editor
+        setTimeout(() => {
+            setShowEditor(true);
+        }, 100);
+    };
+
     const renderActionButtons = () => {
         if (!selectedDocument) return null;
 
@@ -183,7 +200,7 @@ const Dashboard: React.FC = () => {
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={() => setIsAssignDialogOpen(true)}
+                        onClick={handleOpenAssignDialog}
                         disabled={isSaving}
                     >
                         Assign Approvers
@@ -323,29 +340,31 @@ const Dashboard: React.FC = () => {
                                             <CircularProgress />
                                         </Box>
                                     )}
-                                    <DocumentEditor 
-                                        ref={editorRef}
-                                        documentId={selectedDocument?._id}
-                                        content={selectedDocument?.content}
-                                        userRole={user?.role}
-                                        documentStatus={selectedDocument?.status}
-                                        key={selectedDocument?._id}
-                                        onSaveSuccess={() => {
-                                            setSnackbar({
-                                                open: true,
-                                                message: 'Document content saved',
-                                                severity: 'success'
-                                            });
-                                        }}
-                                        onSaveError={(error) => {
-                                            console.error('Save error:', error);
-                                            setSnackbar({
-                                                open: true,
-                                                message: 'Failed to save document content',
-                                                severity: 'error'
-                                            });
-                                        }}
-                                    />
+                                    {showEditor && (
+                                        <DocumentEditor 
+                                            ref={editorRef}
+                                            documentId={selectedDocument?._id}
+                                            content={selectedDocument?.content}
+                                            userRole={user?.role}
+                                            documentStatus={selectedDocument?.status}
+                                            key={selectedDocument?._id}
+                                            onSaveSuccess={() => {
+                                                setSnackbar({
+                                                    open: true,
+                                                    message: 'Document content saved',
+                                                    severity: 'success'
+                                                });
+                                            }}
+                                            onSaveError={(error) => {
+                                                console.error('Save error:', error);
+                                                setSnackbar({
+                                                    open: true,
+                                                    message: 'Failed to save document content',
+                                                    severity: 'error'
+                                                });
+                                            }}
+                                        />
+                                    )}
                                 </Paper>
                             </Box>
                         </>
@@ -365,7 +384,12 @@ const Dashboard: React.FC = () => {
                 </Box>
             </Box>
 
-            <Dialog open={isAssignDialogOpen} onClose={() => setIsAssignDialogOpen(false)}>
+            <Dialog 
+                open={isAssignDialogOpen} 
+                onClose={handleCloseAssignDialog}
+                maxWidth="sm"
+                fullWidth
+            >
                 <DialogTitle>Assign Approver</DialogTitle>
                 <DialogContent>
                     <TextField
@@ -379,7 +403,7 @@ const Dashboard: React.FC = () => {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setIsAssignDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleCloseAssignDialog}>Cancel</Button>
                     <Button onClick={handleAssignApprover} variant="contained">
                         Assign
                     </Button>

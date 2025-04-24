@@ -1,6 +1,16 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import { DocumentEditorContainerComponent, Toolbar, Inject } from '@syncfusion/ej2-react-documenteditor';
+import { 
+    DocumentEditorContainerComponent, 
+    Toolbar, 
+    Inject,
+    WordExport,
+    SfdtExport,
+    Selection,
+    Editor,
+    EditorHistory
+} from '@syncfusion/ej2-react-documenteditor';
 import { updateDocument } from '../../services/api';
+import { Box, Paper, Typography } from '@mui/material';
 import '../../App.css';
 
 interface DocumentEditorProps {
@@ -26,17 +36,16 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
 }, ref) => {
     const editorRef = React.useRef<DocumentEditorContainerComponent | null>(null);
 
-    // Determine if the editor should be read-only
     const isReadOnly = React.useMemo(() => {
         if (!userRole || !documentStatus) return true;
-        
         if (documentStatus === 'approved') return true;
-        
         if (userRole === 'approver') {
-            // Approvers can only edit when status is 'changes_made'
             return documentStatus !== 'changes_made';
         }
-        
+        if (userRole === 'reviewer') {
+            return documentStatus === 'changes_made';
+        }
+
         return false;
     }, [userRole, documentStatus]);
 
@@ -46,14 +55,15 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
             if (!editor || !documentId) return;
 
             try {
-                // Get the document content in SFDT format
+                console.log('Starting document save...');
                 const sfdt = editor.documentEditor.serialize();
-                const encodedContent = btoa(sfdt);
+                console.log('Document serialized, length:', sfdt.length);
                 
-                // Save to MongoDB through API
+                // Save the SFDT content directly (it will be base64 encoded on the server)
                 await updateDocument(documentId, {
-                    content: encodedContent
+                    content: sfdt
                 });
+                console.log('Document saved successfully');
 
                 if (onSaveSuccess) {
                     onSaveSuccess();
@@ -72,33 +82,62 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
         const editor = editorRef.current;
         if (editor && content) {
             try {
-                const decodedContent = atob(content);
-                editor.documentEditor.open(decodedContent);
+                console.log('Loading document...');
+                editor.documentEditor.open(content);
+                editor.documentEditor.isReadOnly = isReadOnly;
+                editor.enableToolbar = !isReadOnly;
+                console.log('Document loaded successfully');
             } catch (error) {
                 console.error('Failed to load document:', error);
+                if (onSaveError) {
+                    onSaveError(error);
+                }
             }
         }
-    }, [content]);
-
-    React.useEffect(() => {
-        const editor = editorRef.current;
-        if (editor) {
-            editor.documentEditor.isReadOnly = isReadOnly;
-            editor.enableToolbar = !isReadOnly;
-        }
-    }, [isReadOnly]);
+    }, [content, isReadOnly, onSaveError]);
 
     return (
-        <div className="document-editor-wrapper">
-            <DocumentEditorContainerComponent
-                ref={editorRef}
-                height="100vh"
-                enableToolbar={!isReadOnly}
-                serviceUrl="https://ej2services.syncfusion.com/production/web-services/api/documenteditor/"
+        <Box sx={{ height: '100%', position: 'relative' }}>
+            <Paper 
+                elevation={0} 
+                sx={{ 
+                    height: '100%',
+                    backgroundColor: 'grey.50',
+                    position: 'relative'
+                }}
             >
-                <Inject services={[Toolbar]} />
-            </DocumentEditorContainerComponent>
-        </div>
+                {isReadOnly && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            padding: 1,
+                            backgroundColor: 'primary.main',
+                            color: 'primary.contrastText',
+                            zIndex: 1,
+                            textAlign: 'center'
+                        }}
+                    >
+                        <Typography variant="caption">
+                            Read-only Mode
+                        </Typography>
+                    </Box>
+                )}
+
+                <div className="document-editor-wrapper">
+                    <DocumentEditorContainerComponent
+                        ref={editorRef}
+                        height="100vh"
+                        enableToolbar={!isReadOnly}
+                        serviceUrl="https://ej2services.syncfusion.com/production/web-services/api/documenteditor/"
+                    >
+                        <Inject services={[Toolbar, WordExport, SfdtExport, Selection, Editor, EditorHistory]} />
+                    </DocumentEditorContainerComponent>
+                </div>
+            </Paper>
+        </Box>
     );
 });
 

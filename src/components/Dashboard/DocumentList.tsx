@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
     List,
     ListItem,
-    ListItemText,
+    // ListItemText,
     ListItemButton,
-    Paper,
+    // Paper,
     Box,
     Typography,
     Select,
@@ -80,6 +80,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
             height: '100%',
             borderRight: 1,
             borderColor: 'divider',
+            backgroundColor: 'background.default',
         }}>
             <Box sx={{ 
                 p: 2, 
@@ -109,6 +110,15 @@ const DocumentList: React.FC<DocumentListProps> = ({
                 flexGrow: 1, 
                 overflow: 'auto',
                 backgroundColor: 'background.paper',
+                '& .MuiListItem-root': {
+                    backgroundColor: 'background.default',
+                    '&:hover': {
+                        backgroundColor: 'action.hover',
+                    },
+                    '&.Mui-selected, &[aria-selected=true]': {
+                        backgroundColor: 'action.selected',
+                    },
+                },
             }}>
                 {documents.length === 0 ? (
                     <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -144,7 +154,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                                                     color: 'text.primary'
                                                 }}
                                             >
-                                                {doc.title}
+                                                {doc.title.split('.')[0]}
                                             </Typography>
                                             <StatusPill status={doc.status} />
                                         </Box>

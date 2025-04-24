@@ -42,7 +42,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
                 },
                 background: {
                     default: '#f8f9fa',
-                    paper: '#ffffff',
+                    paper: '#EBEBEB',
                 },
                 text: {
                     primary: 'rgba(0, 0, 0, 0.87)',
@@ -73,7 +73,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
                 },
                 background: {
                     default: '#121212',
-                    paper: '#1e1e1e',
+                    paper: '#0A0A0A',
                 },
                 text: {
                     primary: '#ffffff',
