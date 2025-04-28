@@ -19,6 +19,8 @@ import DocumentEditor, { DocumentEditorRef } from '../DocumentEditor/DocumentEdi
 import { Document } from '../../types';
 import { updateDocument, addApprovers, getDocument } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import ResizableLayout from '../common/ResizableLayout';
+import AIChatSidebar from '../AIChatSidebar/AIChatSidebar';
 
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
@@ -265,124 +267,88 @@ const Dashboard: React.FC = () => {
 
     return (
         <Layout>
-            <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'row',
-                height: '100%',
-            }}>
-                <Box sx={{ width: '300px', height: '100vh' }}>
-                    <DocumentList
-                        onDocumentSelect={handleDocumentSelect}
-                        selectedDocument={selectedDocument || undefined}
-                        refreshTrigger={refreshTrigger}
-                    />
-                </Box>
-                <Box sx={{ 
-                    flexGrow: 1, 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    height: '100%',
-                    width: 'calc(100vw - 300px)',
-                    backgroundColor: 'background.default',
-                }}>
-                    {selectedDocument ? (
-                        <>
-                            <Box sx={{ 
-                                p: 2, 
-                                borderBottom: 1, 
-                                borderColor: 'divider',
-                                backgroundColor: 'background.paper',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}>
-                                <Box sx={{ display: 'flex', gap: 2 }}>
-                                    {renderActionButtons()}
-                                </Box>
-                                {selectedDocument.status === 'approved' && (
-                                    <Typography 
-                                        variant="subtitle2" 
-                                        sx={{ color: 'success.main' }}
-                                    >
-                                        ✓ Approved
-                                    </Typography>
-                                )}
-                            </Box>
-                            <Box sx={{ 
-                                flexGrow: 1, 
-                                backgroundColor: 'white',
-                                p: 0,
-                                overflow: 'hidden'
-                            }}>
-                                <Paper 
-                                    elevation={0} 
-                                    sx={{ 
-                                        height: '100%',
-                                        backgroundColor: 'grey.50',
-                                        position: 'relative'
-                                    }}
-                                >
-                                    {isLoading && (
-                                        <Box
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0,
-                                                right: 0,
-                                                bottom: 0,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                                zIndex: 1
-                                            }}
+            <ResizableLayout
+                leftPanel={
+                    <Box sx={{ height: '100%', overflow: 'auto' }}>
+                        <DocumentList
+                            selectedDocument={selectedDocument || undefined}
+                            onDocumentSelect={handleDocumentSelect}
+                            refreshTrigger={refreshTrigger}
+                        />
+                    </Box>
+                }
+                middlePanel={
+                    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        {selectedDocument ? (
+                            <>
+                                <Box sx={{ 
+                                    p: 2, 
+                                    borderBottom: 1, 
+                                    borderColor: 'divider',
+                                    backgroundColor: 'background.paper',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                        {renderActionButtons()}
+                                    </Box>
+                                    {selectedDocument.status === 'approved' && (
+                                        <Typography 
+                                            variant="subtitle2" 
+                                            sx={{ color: 'success.main' }}
                                         >
-                                            <CircularProgress />
-                                        </Box>
+                                            ✓ Approved
+                                        </Typography>
                                     )}
-                                    {showEditor && (
-                                        <DocumentEditor 
-                                            ref={editorRef}
-                                            documentId={selectedDocument?._id}
-                                            content={selectedDocument?.content}
-                                            userRole={user?.role}
-                                            documentStatus={selectedDocument?.status}
-                                            key={selectedDocument?._id}
-                                            onSaveSuccess={() => {
-                                                setSnackbar({
-                                                    open: true,
-                                                    message: 'Document content saved',
-                                                    severity: 'success'
-                                                });
-                                            }}
-                                            onSaveError={(error) => {
-                                                console.error('Save error:', error);
-                                                setSnackbar({
-                                                    open: true,
-                                                    message: 'Failed to save document content',
-                                                    severity: 'error'
-                                                });
-                                            }}
-                                        />
-                                    )}
-                                </Paper>
+                                </Box>
+                                <Box sx={{ flex: 1, overflow: 'auto' }}>
+                                    <Paper elevation={0} sx={{ height: '100%' }}>
+                                        {showEditor && (
+                                            <DocumentEditor 
+                                                ref={editorRef}
+                                                documentId={selectedDocument?._id}
+                                                content={selectedDocument?.content}
+                                                userRole={user?.role}
+                                                documentStatus={selectedDocument?.status}
+                                                key={selectedDocument?._id}
+                                                onSaveSuccess={() => {
+                                                    setSnackbar({
+                                                        open: true,
+                                                        message: 'Document content saved',
+                                                        severity: 'success'
+                                                    });
+                                                }}
+                                                onSaveError={(error) => {
+                                                    console.error('Save error:', error);
+                                                    setSnackbar({
+                                                        open: true,
+                                                        message: 'Failed to save document content',
+                                                        severity: 'error'
+                                                    });
+                                                }}
+                                            />
+                                        )}
+                                    </Paper>
+                                </Box>
+                            </>
+                        ) : (
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: '100%',
+                                    backgroundColor: 'background.paper',
+                                }}
+                            >
+                                Select a document to view
                             </Box>
-                        </>
-                    ) : (
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                height: '100vh',
-                                backgroundColor: 'background.paper',
-                            }}
-                        >
-                            Select a document to view
-                        </Box>
-                    )}
-                </Box>
-            </Box>
+                        )}
+                    </Box>
+                }
+                rightPanel={<AIChatSidebar />}
+            />
 
             <Dialog 
                 open={isAssignDialogOpen} 
@@ -410,11 +376,10 @@ const Dashboard: React.FC = () => {
                 </DialogActions>
             </Dialog>
 
-            <Snackbar 
-                open={snackbar.open} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             >
                 <Alert 
                     onClose={handleCloseSnackbar} 

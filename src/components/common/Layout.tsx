@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
             <AppBar 
                 position="static" 
                 elevation={0}
@@ -97,7 +97,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 sx={{ 
                     flexGrow: 1,
                     bgcolor: 'background.default',
-                    height: '100%'
+                    height: 'calc(100vh - 64px)',
+                    overflow: 'hidden'
                 }}
             >
                 {children}

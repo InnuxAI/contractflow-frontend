@@ -129,7 +129,7 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
                 <div className="document-editor-wrapper">
                     <DocumentEditorContainerComponent
                         ref={editorRef}
-                        height="100vh"
+                        height="100%"
                         enableToolbar={!isReadOnly}
                         serviceUrl="https://ej2services.syncfusion.com/production/web-services/api/documenteditor/"
                     >
