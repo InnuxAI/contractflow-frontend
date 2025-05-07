@@ -1,18 +1,15 @@
 import React, { useEffect } from 'react';
-import { Box, AppBar, Toolbar, Typography, IconButton, Button } from '@mui/material';
-import { Brightness4, Brightness7, Logout as LogoutIcon, Person as PersonIcon } from '@mui/icons-material';
+import { Box, AppBar, Toolbar, Typography, IconButton, Button, Link } from '@mui/material';
+import { Brightness4, Brightness7, Logout as LogoutIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 
-interface LayoutProps {
-    children: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC = () => {
     const { logout, user } = useAuth();
     const { mode, toggleTheme } = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         console.log('Current user:', user);
@@ -22,6 +19,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         logout();
         navigate('/login');
     };
+
+    const isActive = (path: string) => location.pathname === path;
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
@@ -48,6 +47,36 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </Typography>
                     {user && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 2, mr: 2 }}>
+                                <Link
+                                    component="button"
+                                    variant="body2"
+                                    onClick={() => navigate('/')}
+                                    sx={{
+                                        color: isActive('/') ? 'primary.main' : 'text.secondary',
+                                        textDecoration: 'none',
+                                        '&:hover': {
+                                            color: 'primary.main',
+                                        }
+                                    }}
+                                >
+                                    Dashboard
+                                </Link>
+                                <Link
+                                    component="button"
+                                    variant="body2"
+                                    onClick={() => navigate('/clause-manager')}
+                                    sx={{
+                                        color: isActive('/clause-manager') ? 'primary.main' : 'text.secondary',
+                                        textDecoration: 'none',
+                                        '&:hover': {
+                                            color: 'primary.main',
+                                        }
+                                    }}
+                                >
+                                    Clause Manager
+                                </Link>
+                            </Box>
                             <Typography 
                                 variant="body2" 
                                 sx={{ 
@@ -101,7 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     overflow: 'hidden'
                 }}
             >
-                {children}
+                <Outlet />
             </Box>
         </Box>
     );

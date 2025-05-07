@@ -13,7 +13,6 @@ import {
     Typography,
     Paper
 } from '@mui/material';
-import Layout from '../common/Layout';
 import DocumentList from './DocumentList';
 import DocumentEditor, { DocumentEditorRef } from '../DocumentEditor/DocumentEditor';
 import { Document } from '../../types';
@@ -266,7 +265,7 @@ const Dashboard: React.FC = () => {
     };
 
     return (
-        <Layout>
+        <>
             <ResizableLayout
                 leftPanel={
                     <Box sx={{ height: '100%', overflow: 'auto' }}>
@@ -389,7 +388,7 @@ const Dashboard: React.FC = () => {
                     {snackbar.message}
                 </Alert>
             </Snackbar>
-        </Layout>
+        </>
     );
 };
 
