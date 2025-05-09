@@ -139,7 +139,7 @@ const Dashboard: React.FC = () => {
                     },
                     body: JSON.stringify({
                         document_id: currentDocument._id,
-                        recipient_email: 'sathish@gmail.com',
+                        recipient_email: 'aksshainair.work@gmail.com',
                         subject: `Approved Document: ${currentDocument.title}`,
                         message: 'The document has been approved and is attached for your review.'
                     })
