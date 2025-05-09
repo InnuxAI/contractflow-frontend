@@ -131,6 +131,9 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
                         ref={editorRef}
                         height="100%"
                         enableToolbar={!isReadOnly}
+                        showPropertiesPane={false}
+                        enableTrackChanges={!isReadOnly}
+                        
                         serviceUrl="https://ej2services.syncfusion.com/production/web-services/api/documenteditor/"
                     >
                         <Inject services={[Toolbar, WordExport, SfdtExport, Selection, Editor, EditorHistory]} />

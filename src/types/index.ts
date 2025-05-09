@@ -11,6 +11,7 @@ export type DocumentStatus = 'new' | 'pending' | 'in_progress' | 'changes_made' 
 export interface Document {
     _id: string;
     title: string;
+    filename: string;
     status: DocumentStatus;
     reviewer_id: string;
     approvers: string[];

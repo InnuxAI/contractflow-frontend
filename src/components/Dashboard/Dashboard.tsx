@@ -18,12 +18,13 @@ import DocumentEditor, { DocumentEditorRef } from '../DocumentEditor/DocumentEdi
 import { Document } from '../../types';
 import { updateDocument, addApprovers, getDocument } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDocument } from '../../contexts/DocumentContext';
 import ResizableLayout from '../common/ResizableLayout';
 import AIChatSidebar from '../AIChatSidebar/AIChatSidebar';
 
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
-    const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+    const { currentDocument, setCurrentDocument } = useDocument();
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
     const [approverEmail, setApproverEmail] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -31,6 +32,7 @@ const Dashboard: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [showEditor, setShowEditor] = useState(true);
+    const [isAIChatVisible, setIsAIChatVisible] = useState(true);
     const editorRef = useRef<DocumentEditorRef>(null);
     const [snackbar, setSnackbar] = useState<{
         open: boolean;
@@ -46,7 +48,7 @@ const Dashboard: React.FC = () => {
         try {
             setIsLoading(true);
             const refreshedDoc = await getDocument(documentId);
-            setSelectedDocument(refreshedDoc);
+            setCurrentDocument(refreshedDoc);
             // Trigger document list refresh
             setRefreshTrigger(prev => prev + 1);
         } catch (error) {
@@ -59,17 +61,17 @@ const Dashboard: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [setCurrentDocument]);
 
     const handleDocumentSelect = async (document: Document) => {
         // If a document is already selected and it's different from the new selection
-        if (selectedDocument && selectedDocument._id !== document._id) {
+        if (currentDocument && currentDocument._id !== document._id) {
             // Clear the current document first
-            setSelectedDocument(null);
+            setCurrentDocument(null);
             // Then fetch the fresh content of the new document
             await refreshDocument(document._id);
         } else {
-            setSelectedDocument(document);
+            setCurrentDocument(document);
         }
         
         // If user is reviewer and document status is new or pending, update to in_progress
@@ -88,7 +90,7 @@ const Dashboard: React.FC = () => {
     };
 
     const handleSave = async () => {
-        if (!selectedDocument || !editorRef.current) return;
+        if (!currentDocument || !editorRef.current) return;
 
         setIsSaving(true);
         try {
@@ -96,13 +98,13 @@ const Dashboard: React.FC = () => {
             await editorRef.current.save();
             
             // Then update document status
-            await updateDocument(selectedDocument._id, {
+            await updateDocument(currentDocument._id, {
                 status: user?.role === 'reviewer' ? 'changes_made' : 'in_progress',
                 notes: user?.role === 'reviewer' ? 'Document marked as reviewed' : 'Document sent back for review'
             });
 
             // Refresh the document to get the latest content and trigger list refresh
-            await refreshDocument(selectedDocument._id);
+            await refreshDocument(currentDocument._id);
 
             setSnackbar({
                 open: true,
@@ -122,23 +124,44 @@ const Dashboard: React.FC = () => {
     };
 
     const handleApprove = async () => {
-        if (!selectedDocument || !editorRef.current) return;
+        if (!currentDocument || !editorRef.current) return;
 
         setIsApproving(true);
         try {
             // First save the document content
             await editorRef.current.save();
-            await updateDocument(selectedDocument._id, {
+            
+            // Update document status and add note about sending to sathish@gmail.com
+            await updateDocument(currentDocument._id, {
                 status: 'approved',
-                notes: 'Document approved'
+                notes: 'Document approved and sent to sathish@gmail.com'
             });
 
+            // Send document to sathish@gmail.com
+            try {
+                await fetch('http://localhost:8000/api/documents/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        document_id: currentDocument._id,
+                        recipient_email: 'sathish@gmail.com',
+                        subject: `Approved Document: ${currentDocument.title}`,
+                        message: 'The document has been approved and is attached for your review.'
+                    })
+                });
+            } catch (emailError) {
+                console.error('Failed to send email:', emailError);
+                // Don't throw the error, just log it and continue
+            }
+
             // Refresh the document and trigger list refresh
-            await refreshDocument(selectedDocument._id);
+            await refreshDocument(currentDocument._id);
 
             setSnackbar({
                 open: true,
-                message: 'Document approved successfully',
+                message: 'Document approved and sent to sathish@gmail.com',
                 severity: 'success'
             });
         } catch (error) {
@@ -154,10 +177,10 @@ const Dashboard: React.FC = () => {
     };
 
     const handleAssignApprover = async () => {
-        if (!selectedDocument || !approverEmail) return;
+        if (!currentDocument || !approverEmail) return;
 
         try {
-            await addApprovers(selectedDocument._id, [approverEmail]);
+            await addApprovers(currentDocument._id, [approverEmail]);
             setIsAssignDialogOpen(false);
             setApproverEmail('');
             setSnackbar({
@@ -193,7 +216,7 @@ const Dashboard: React.FC = () => {
     };
 
     const renderActionButtons = () => {
-        if (!selectedDocument) return null;
+        if (!currentDocument) return null;
 
         if (user?.role === 'reviewer') {
             return (
@@ -201,26 +224,17 @@ const Dashboard: React.FC = () => {
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={handleOpenAssignDialog}
-                        disabled={isSaving}
-                    >
-                        Assign Approvers
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
                         onClick={handleSave}
                         disabled={isSaving}
-                        sx={{ ml: 2 }}
                     >
-                        {isSaving ? (
-                            <>
-                                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                                Saving...
-                            </>
-                        ) : (
-                            'Save Changes'
-                        )}
+                        {isSaving ? <CircularProgress size={24} /> : 'Save Changes'}
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleOpenAssignDialog}
+                    >
+                        Assign Approver
                     </Button>
                 </>
             );
@@ -233,30 +247,15 @@ const Dashboard: React.FC = () => {
                         onClick={handleSave}
                         disabled={isSaving}
                     >
-                        {isSaving ? (
-                            <>
-                                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                                Saving...
-                            </>
-                        ) : (
-                            'Send Back for Review'
-                        )}
+                        {isSaving ? <CircularProgress size={24} /> : 'Send Back for Review'}
                     </Button>
                     <Button
                         variant="contained"
                         color="success"
                         onClick={handleApprove}
-                        disabled={isApproving || selectedDocument.status === 'approved'}
-                        sx={{ ml: 2 }}
+                        disabled={isApproving}
                     >
-                        {isApproving ? (
-                            <>
-                                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                                Approving...
-                            </>
-                        ) : (
-                            selectedDocument.status === 'approved' ? 'Approved' : 'Approve'
-                        )}
+                        {isApproving ? <CircularProgress size={24} /> : 'Approve'}
                     </Button>
                 </>
             );
@@ -265,12 +264,11 @@ const Dashboard: React.FC = () => {
     };
 
     return (
-        <>
+        <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <ResizableLayout
                 leftPanel={
-                    <Box sx={{ height: '100%', overflow: 'auto' }}>
+                    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                         <DocumentList
-                            selectedDocument={selectedDocument || undefined}
                             onDocumentSelect={handleDocumentSelect}
                             refreshTrigger={refreshTrigger}
                         />
@@ -278,83 +276,43 @@ const Dashboard: React.FC = () => {
                 }
                 middlePanel={
                     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        {selectedDocument ? (
+                        {showEditor && currentDocument && (
                             <>
-                                <Box sx={{ 
-                                    p: 2, 
-                                    borderBottom: 1, 
-                                    borderColor: 'divider',
-                                    backgroundColor: 'background.paper',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <Box sx={{ display: 'flex', gap: 2 }}>
-                                        {renderActionButtons()}
-                                    </Box>
-                                    {selectedDocument.status === 'approved' && (
-                                        <Typography 
-                                            variant="subtitle2" 
-                                            sx={{ color: 'success.main' }}
-                                        >
-                                            ✓ Approved
-                                        </Typography>
-                                    )}
+                                <Box sx={{ p: 2, display: 'flex', gap: 2, borderBottom: 1, borderColor: 'divider' }}>
+                                    {renderActionButtons()}
                                 </Box>
-                                <Box sx={{ flex: 1, overflow: 'auto' }}>
-                                    <Paper elevation={0} sx={{ height: '100%' }}>
-                                        {showEditor && (
-                                            <DocumentEditor 
-                                                ref={editorRef}
-                                                documentId={selectedDocument?._id}
-                                                content={selectedDocument?.content}
-                                                userRole={user?.role}
-                                                documentStatus={selectedDocument?.status}
-                                                key={selectedDocument?._id}
-                                                onSaveSuccess={() => {
-                                                    setSnackbar({
-                                                        open: true,
-                                                        message: 'Document content saved',
-                                                        severity: 'success'
-                                                    });
-                                                }}
-                                                onSaveError={(error) => {
-                                                    console.error('Save error:', error);
-                                                    setSnackbar({
-                                                        open: true,
-                                                        message: 'Failed to save document content',
-                                                        severity: 'error'
-                                                    });
-                                                }}
-                                            />
-                                        )}
-                                    </Paper>
-                                </Box>
+                                <DocumentEditor
+                                    ref={editorRef}
+                                    documentId={currentDocument._id}
+                                    content={currentDocument.content}
+                                    userRole={user?.role}
+                                    documentStatus={currentDocument.status}
+                                    onSaveSuccess={() => {
+                                        setSnackbar({
+                                            open: true,
+                                            message: 'Document content saved',
+                                            severity: 'success'
+                                        });
+                                    }}
+                                    onSaveError={(error) => {
+                                        console.error('Save error:', error);
+                                        setSnackbar({
+                                            open: true,
+                                            message: 'Failed to save document content',
+                                            severity: 'error'
+                                        });
+                                    }}
+                                />
                             </>
-                        ) : (
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    height: '100%',
-                                    backgroundColor: 'background.paper',
-                                }}
-                            >
-                                Select a document to view
-                            </Box>
                         )}
                     </Box>
                 }
-                rightPanel={<AIChatSidebar />}
+                rightPanel={
+                    <AIChatSidebar onVisibilityChange={setIsAIChatVisible} />
+                }
+                isRightPanelVisible={isAIChatVisible}
             />
-
-            <Dialog 
-                open={isAssignDialogOpen} 
-                onClose={handleCloseAssignDialog}
-                maxWidth="sm"
-                fullWidth
-            >
+            <Dialog open={isAssignDialogOpen} onClose={handleCloseAssignDialog}>
                 <DialogTitle>Assign Approver</DialogTitle>
                 <DialogContent>
                     <TextField
@@ -369,26 +327,25 @@ const Dashboard: React.FC = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseAssignDialog}>Cancel</Button>
-                    <Button onClick={handleAssignApprover} variant="contained">
+                    <Button onClick={handleAssignApprover} disabled={!approverEmail}>
                         Assign
                     </Button>
                 </DialogActions>
             </Dialog>
-
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
             >
-                <Alert 
-                    onClose={handleCloseSnackbar} 
+                <Alert
+                    onClose={handleCloseSnackbar}
                     severity={snackbar.severity}
                     sx={{ width: '100%' }}
                 >
                     {snackbar.message}
                 </Alert>
             </Snackbar>
-        </>
+        </Box>
     );
 };
 

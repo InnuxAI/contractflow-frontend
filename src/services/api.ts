@@ -53,6 +53,11 @@ export const getUserByEmail = async (email: string) => {
     return response.data;
 };
 
+export const getUserById = async (id: string) => {
+    const response = await api.get(`/users/${id}`);
+    return response.data;
+};
+
 export const addApprovers = async (documentId: string, approverEmails: string[]) => {
     // First get the user IDs for each email
     const approverIds = await Promise.all(

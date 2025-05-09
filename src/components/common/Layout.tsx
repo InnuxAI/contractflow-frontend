@@ -127,6 +127,7 @@ const Layout: React.FC = () => {
                     flexGrow: 1,
                     bgcolor: 'background.default',
                     height: 'calc(100vh - 64px)',
+                    minHeight: 0,
                     overflow: 'hidden'
                 }}
             >

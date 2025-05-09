@@ -7,6 +7,7 @@ import ClauseManager from './pages/ClauseManager';
 import Unauthorized from './components/Auth/Unauthorized';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { DocumentProvider } from './contexts/DocumentContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Layout from './components/common/Layout';
 
@@ -14,24 +15,26 @@ const App: React.FC = () => {
     return (
         <ThemeProvider>
             <AuthProvider>
-                <CssBaseline />
-                <Router>
-                    <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/unauthorized" element={<Unauthorized />} />
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route
-                            element={
-                                <ProtectedRoute>
-                                    <Layout />
-                                </ProtectedRoute>
-                            }
-                        >
-                            <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/clause-manager" element={<ClauseManager />} />
-                        </Route>
-                    </Routes>
-                </Router>
+                <DocumentProvider>
+                    <CssBaseline />
+                    <Router>
+                        <Routes>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/unauthorized" element={<Unauthorized />} />
+                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                            <Route
+                                element={
+                                    <ProtectedRoute>
+                                        <Layout />
+                                    </ProtectedRoute>
+                                }
+                            >
+                                <Route path="/dashboard" element={<Dashboard />} />
+                                <Route path="/clause-manager" element={<ClauseManager />} />
+                            </Route>
+                        </Routes>
+                    </Router>
+                </DocumentProvider>
             </AuthProvider>
         </ThemeProvider>
     );

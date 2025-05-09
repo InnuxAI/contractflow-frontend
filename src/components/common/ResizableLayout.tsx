@@ -7,6 +7,7 @@ interface ResizableLayoutProps {
     rightPanel: React.ReactNode;
     initialLeftWidth?: number;
     initialRightWidth?: number;
+    isRightPanelVisible?: boolean;
 }
 
 const ResizableLayout: React.FC<ResizableLayoutProps> = ({
@@ -14,7 +15,8 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
     middlePanel,
     rightPanel,
     initialLeftWidth = 300,
-    initialRightWidth = 300
+    initialRightWidth = 300,
+    isRightPanelVisible = true
 }) => {
     const [leftWidth, setLeftWidth] = useState(initialLeftWidth);
     const [rightWidth, setRightWidth] = useState(initialRightWidth);
@@ -70,7 +72,8 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
             display: 'flex', 
             height: '100%',
             width: '100%',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            position: 'relative'
         }}>
             {/* Left Panel */}
             <Box sx={{ 
@@ -79,7 +82,8 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
                 overflow: 'hidden',
                 borderRight: 1,
                 borderColor: 'divider',
-                position: 'relative'
+                position: 'relative',
+                flexShrink: 0
             }}>
                 {leftPanel}
             </Box>
@@ -94,6 +98,7 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
                     '&:hover': {
                         bgcolor: 'primary.main',
                     },
+                    flexShrink: 0
                 }}
                 onMouseDown={handleMouseDownLeft}
             />
@@ -103,36 +108,43 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
                 flex: 1,
                 height: '100%',
                 overflow: 'hidden',
-                minWidth: 400
+                minWidth: 400,
+                transition: 'margin-right 0.3s ease',
+                position: 'relative'
             }}>
                 {middlePanel}
             </Box>
 
-            {/* Resizable Handle */}
-            <Box
-                sx={{
-                    width: '4px',
-                    height: '100%',
-                    cursor: 'col-resize',
-                    bgcolor: 'divider',
-                    '&:hover': {
-                        bgcolor: 'primary.main',
-                    },
-                }}
-                onMouseDown={handleMouseDownRight}
-            />
-
-            {/* Right Panel */}
-            <Box sx={{ 
-                width: rightWidth,
-                height: '100%',
-                overflow: 'hidden',
-                borderLeft: 1,
-                borderColor: 'divider',
-                position: 'relative'
-            }}>
-                {rightPanel}
-            </Box>
+            {/* Right Panel and Handle */}
+            {isRightPanelVisible && (
+                <>
+                    <Box
+                        sx={{
+                            width: '4px',
+                            height: '100%',
+                            cursor: 'col-resize',
+                            bgcolor: 'divider',
+                            '&:hover': {
+                                bgcolor: 'primary.main',
+                            },
+                            flexShrink: 0
+                        }}
+                        onMouseDown={handleMouseDownRight}
+                    />
+                    <Box sx={{ 
+                        width: rightWidth,
+                        height: '100%',
+                        overflow: 'hidden',
+                        borderLeft: 1,
+                        borderColor: 'divider',
+                        position: 'relative',
+                        transition: 'width 0.3s ease',
+                        flexShrink: 0
+                    }}>
+                        {rightPanel}
+                    </Box>
+                </>
+            )}
         </Box>
     );
 };

@@ -13,10 +13,11 @@ import {
     InputLabel,
     SelectChangeEvent,
     Divider,
-    CircularProgress
+    CircularProgress,
+    Tooltip
 } from '@mui/material';
 import { Document, DocumentStatus } from '../../types';
-import { getDocuments } from '../../services/api';
+import { getDocuments, getUserById } from '../../services/api';
 import StatusPill from '../common/StatusPill';
 
 interface DocumentListProps {
@@ -25,12 +26,16 @@ interface DocumentListProps {
     refreshTrigger: number;
 }
 
+interface DocumentWithApproverEmails extends Document {
+    approverEmails: string[];
+}
+
 const DocumentList: React.FC<DocumentListProps> = ({
     onDocumentSelect,
     selectedDocument,
     refreshTrigger
 }) => {
-    const [documents, setDocuments] = useState<Document[]>([]);
+    const [documents, setDocuments] = useState<DocumentWithApproverEmails[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'ALL'>('ALL');
@@ -41,7 +46,23 @@ const DocumentList: React.FC<DocumentListProps> = ({
             setError(null);
             try {
                 const docs = await getDocuments(statusFilter === 'ALL' ? undefined : statusFilter);
-                setDocuments(docs);
+                // For each document, fetch approver emails
+                const docsWithEmails = await Promise.all(docs.map(async (doc) => {
+                    if (doc.approvers && doc.approvers.length > 0) {
+                        const approverUsers = await Promise.all(doc.approvers.map(async (id) => {
+                            try {
+                                const user = await getUserById(id);
+                                return user.email;
+                            } catch {
+                                return id; // fallback to id if user not found
+                            }
+                        }));
+                        return { ...doc, approverEmails: approverUsers };
+                    } else {
+                        return { ...doc, approverEmails: [] };
+                    }
+                }));
+                setDocuments(docsWithEmails);
             } catch (err) {
                 console.error('Failed to fetch documents:', err);
                 setError('Failed to load documents');
@@ -138,27 +159,43 @@ const DocumentList: React.FC<DocumentListProps> = ({
                                             : 'transparent',
                                     }}
                                 >
-                                    <ListItemButton
-                                        onDoubleClick={() => onDocumentSelect(doc)}
-                                        sx={{ 
-                                            py: 2,
-                                            px: 2,
-                                        }}
+                                    <Tooltip
+                                        title={
+                                            doc.approverEmails && doc.approverEmails.length > 0
+                                                ? (
+                                                    <Box>
+                                                        {doc.approverEmails.map((email: string, idx: number) => (
+                                                            <Typography key={idx} variant="body2">{email}</Typography>
+                                                        ))}
+                                                    </Box>
+                                                )
+                                                : 'No approvers assigned'
+                                        }
+                                        arrow
+                                        placement="right"
                                     >
-                                        <Box sx={{ width: '100%' }}>
-                                            <Typography 
-                                                variant="subtitle1" 
-                                                sx={{ 
-                                                    mb: 1,
-                                                    fontWeight: selectedDocument?._id === doc._id ? 600 : 400,
-                                                    color: 'text.primary'
-                                                }}
-                                            >
-                                                {doc.title.split('.')[0]}
-                                            </Typography>
-                                            <StatusPill status={doc.status} />
-                                        </Box>
-                                    </ListItemButton>
+                                        <ListItemButton
+                                            onDoubleClick={() => onDocumentSelect(doc)}
+                                            sx={{ 
+                                                py: 2,
+                                                px: 2,
+                                            }}
+                                        >
+                                            <Box sx={{ width: '100%' }}>
+                                                <Typography 
+                                                    variant="subtitle1" 
+                                                    sx={{ 
+                                                        mb: 1,
+                                                        fontWeight: selectedDocument?._id === doc._id ? 600 : 400,
+                                                        color: 'text.primary'
+                                                    }}
+                                                >
+                                                    {doc.title.split('.')[0]}
+                                                </Typography>
+                                                <StatusPill status={doc.status} />
+                                            </Box>
+                                        </ListItemButton>
+                                    </Tooltip>
                                 </ListItem>
                                 {index < documents.length - 1 && <Divider />}
                             </React.Fragment>
