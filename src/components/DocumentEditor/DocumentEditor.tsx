@@ -17,7 +17,7 @@ interface DocumentEditorProps {
     documentId?: string;
     content?: string;
     onSaveSuccess?: () => void;
-    onSaveError?: (error: any) => void;
+    onSaveError?: (error: unknown) => void;
     userRole?: string;
     documentStatus?: string;
 }

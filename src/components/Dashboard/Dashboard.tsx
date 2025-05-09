@@ -27,7 +27,6 @@ const Dashboard: React.FC = () => {
     const [approverEmail, setApproverEmail] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
-    const [_isLoading, setIsLoading] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [showEditor, setShowEditor] = useState(true);
     const editorRef = useRef<DocumentEditorRef>(null);
@@ -43,7 +42,6 @@ const Dashboard: React.FC = () => {
 
     const refreshDocument = useCallback(async (documentId: string) => {
         try {
-            setIsLoading(true);
             const refreshedDoc = await getDocument(documentId);
             setCurrentDocument(refreshedDoc);
             // Trigger document list refresh
@@ -55,8 +53,6 @@ const Dashboard: React.FC = () => {
                 message: 'Failed to refresh document',
                 severity: 'error'
             });
-        } finally {
-            setIsLoading(false);
         }
     }, [setCurrentDocument]);
 

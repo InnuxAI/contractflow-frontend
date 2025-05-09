@@ -226,7 +226,7 @@ const ClauseManager: React.FC = () => {
         }
     };
 
-    const handleFilterChange = (field: keyof FilterState, value: any) => {
+    const handleFilterChange = (field: keyof FilterState, value: unknown) => {
         setFilterState(prev => ({
             ...prev,
             [field]: value
