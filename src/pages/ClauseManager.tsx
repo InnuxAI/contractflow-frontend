@@ -9,7 +9,6 @@ import {
     TextField,
     List,
     ListItem,
-    ListItemText,
     Typography,
     Paper,
     Select,
@@ -28,8 +27,7 @@ import {
     Autocomplete,
     Stack,
     Drawer,
-    Divider,
-    ListItemIcon
+    Divider
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterIcon, Close as CloseIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -97,22 +95,6 @@ const gridItemVariants = {
     }
 };
 
-const filterVariants = {
-    hidden: { 
-        opacity: 0,
-        x: -20
-    },
-    visible: { 
-        opacity: 1,
-        x: 0,
-        transition: {
-            type: "spring",
-            damping: 20,
-            stiffness: 200
-        }
-    }
-};
-
 const drawerWidth = '30vw';
 
 const ClauseManager: React.FC = () => {
@@ -146,7 +128,6 @@ const ClauseManager: React.FC = () => {
     });
     const [columns, setColumns] = useState(1);
     const [isGrid, setIsGrid] = useState(false);
-    const [hueVariation, setHueVariation] = useState<number>(Math.random() * 360);
     const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
@@ -291,7 +272,7 @@ const ClauseManager: React.FC = () => {
 
     const getDomainPillColors = (domain: string) => {
         const domainHash = domain.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const domainHue = (hueVariation + domainHash) % 360;
+        const domainHue = (0 + domainHash) % 360;
         
         return {
             background: `hsl(${domainHue}, 90%, 10%)`,

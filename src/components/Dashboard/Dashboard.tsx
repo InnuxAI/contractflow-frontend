@@ -10,8 +10,6 @@ import {
     Snackbar,
     Alert,
     CircularProgress,
-    Typography,
-    Paper
 } from '@mui/material';
 import DocumentList from './DocumentList';
 import DocumentEditor, { DocumentEditorRef } from '../DocumentEditor/DocumentEditor';
@@ -29,10 +27,9 @@ const Dashboard: React.FC = () => {
     const [approverEmail, setApproverEmail] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [_isLoading, setIsLoading] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [showEditor, setShowEditor] = useState(true);
-    const [isAIChatVisible, setIsAIChatVisible] = useState(true);
     const editorRef = useRef<DocumentEditorRef>(null);
     const [snackbar, setSnackbar] = useState<{
         open: boolean;
@@ -308,9 +305,8 @@ const Dashboard: React.FC = () => {
                     </Box>
                 }
                 rightPanel={
-                    <AIChatSidebar onVisibilityChange={setIsAIChatVisible} />
+                    <AIChatSidebar/>
                 }
-                isRightPanelVisible={isAIChatVisible}
             />
             <Dialog open={isAssignDialogOpen} onClose={handleCloseAssignDialog}>
                 <DialogTitle>Assign Approver</DialogTitle>

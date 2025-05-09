@@ -1,4 +1,4 @@
-import { createTheme, PaletteMode, alpha } from '@mui/material';
+import { createTheme, PaletteMode } from '@mui/material';
 
 // Custom type for our status colors
 declare module '@mui/material/styles' {
@@ -101,7 +101,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
         subtitle2: { fontSize: '0.875rem', fontWeight: 500 },
         body1: { fontSize: '1rem', lineHeight: 1.5 },
         body2: { fontSize: '0.875rem', lineHeight: 1.43 },
-        button: { textTransform: 'none', fontWeight: 600 },
+        button: { textTransform: 'none' as const, fontWeight: 600 },
     },
     shape: {
         borderRadius: 8,
@@ -120,13 +120,6 @@ const getDesignTokens = (mode: PaletteMode) => ({
         MuiButton: {
             defaultProps: {
                 disableElevation: true,
-            },
-            styleOverrides: {
-                root: {
-                    borderRadius: 8,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                },
             },
         },
         MuiPaper: {

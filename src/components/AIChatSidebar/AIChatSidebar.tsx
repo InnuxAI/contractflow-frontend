@@ -21,11 +21,7 @@ interface ChatMessage {
     sentTime: string;
 }
 
-interface AIChatSidebarProps {
-    onVisibilityChange: (isVisible: boolean) => void;
-}
-
-const AIChatSidebar: React.FC<AIChatSidebarProps> = ({ onVisibilityChange }) => {
+const AIChatSidebar: React.FC = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const { currentDocument } = useDocument();
