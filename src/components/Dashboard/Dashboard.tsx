@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
 
             // Send document to sathish@gmail.com
             try {
-                await fetch('http://localhost:8000/api/documents/send-email', {
+                await fetch('https://contractflow-backend-hrf5nxgjy-valterans-projects.vercel.app/api/documents/send-email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

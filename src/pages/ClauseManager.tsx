@@ -136,7 +136,7 @@ const ClauseManager: React.FC = () => {
 
     const fetchClauses = async () => {
         try {
-            const response = await axios.get<Clause[]>('http://localhost:8000/api/clauses');
+            const response = await axios.get<Clause[]>('https://contractflow-backend-hrf5nxgjy-valterans-projects.vercel.app/api/clauses');
             setClauses(response.data);
             const uniqueDomains = Array.from(new Set(response.data.map(clause => clause.domain)));
             setDomains(['All', ...uniqueDomains]);
@@ -154,14 +154,14 @@ const ClauseManager: React.FC = () => {
         e.preventDefault();
         try {
             if (editingClause) {
-                await axios.put(`http://localhost:8000/api/clauses/${editingClause.id}`, newClause);
+                await axios.put(`https://contractflow-backend-hrf5nxgjy-valterans-projects.vercel.app/api/clauses/${editingClause.id}`, newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause updated successfully',
                     severity: 'success'
                 });
             } else {
-                await axios.post('http://localhost:8000/api/clauses', newClause);
+                await axios.post('https://contractflow-backend-hrf5nxgjy-valterans-projects.vercel.app/api/clauses', newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause created successfully',
@@ -206,7 +206,7 @@ const ClauseManager: React.FC = () => {
         if (!clauseToDelete) return;
         
         try {
-            await axios.delete(`http://localhost:8000/api/clauses/${clauseToDelete}`);
+            await axios.delete(`https://contractflow-backend-hrf5nxgjy-valterans-projects.vercel.app/api/clauses/${clauseToDelete}`);
             fetchClauses();
             setSnackbar({
                 open: true,

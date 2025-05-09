@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Document, DocumentStatus } from '../types';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://contractflow-backend-hrf5nxgjy-valterans-projects.vercel.app';
 
 const api = axios.create({
     baseURL: API_URL,
