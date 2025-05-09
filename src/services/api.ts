@@ -21,10 +21,10 @@ api.interceptors.request.use((config) => {
 });
 
 export const login = async (email: string, password: string) => {
-    const response = await api.post('/token', {
-        username: email,  // FastAPI OAuth2 expects username field
-        password,
-    }, {
+    const params = new URLSearchParams();
+    params.append('username', email);
+    params.append('password', password);
+    const response = await api.post('/token', params, {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
