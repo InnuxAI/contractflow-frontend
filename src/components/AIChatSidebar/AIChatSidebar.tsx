@@ -77,7 +77,7 @@ const AIChatSidebar: React.FC = () => {
 
             console.log('Sending request with body:', requestBody);
 
-            const response = await fetch('contractflow-backend-2mxg8mkdk-valterans-projects.vercel.app/api/chat/stream', {
+            const response = await fetch('https://contractflow-backend-2mxg8mkdk-valterans-projects.vercel.app/api/chat/stream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
