@@ -2,7 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CssBaseline } from '@mui/material';
 import Login from './components/Auth/Login';
-import Dashboard from './components/Dashboard/Dashboard';
+import Dashboard from './pages/Dashboard';
+import DocumentReview from './pages/DocumentReview';
 import ClauseManager from './pages/ClauseManager';
 import Unauthorized from './components/Auth/Unauthorized';
 import { AuthProvider } from './contexts/AuthContext';
@@ -30,6 +31,7 @@ const App: React.FC = () => {
                                 }
                             >
                                 <Route path="/dashboard" element={<Dashboard />} />
+                                <Route path="/document-review" element={<DocumentReview />} />
                                 <Route path="/clause-manager" element={<ClauseManager />} />
                             </Route>
                         </Routes>

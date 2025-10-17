@@ -1,58 +1,126 @@
+/* Import Syncfusion styles */
 @import url("https://cdn.syncfusion.com/ej2/material.css");
 
+/* macOS-style Floating Dock */
+.mac-dock {
+  position: fixed;
+  margin-left: 5px;
+  margin-bottom: 40px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column; 
+  gap: 16px;
+  border-radius: 8px;
+  z-index: 2000;
+  align-items: flex-start;
+}
+
+.mac-dock .dock-item {
+  transition: transform 0.2s cubic-bezier(.4,2,.6,1), box-shadow 0.2s;
+  transform: scale(1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  border-radius: 16px;
+  background: #232323;
+  /* color: #90caf9; */
+  border: 1px solid #3a3a3a;
+}
+
+.mac-dock .dock-item:hover,
+.mac-dock .dock-item:focus {
+  transform: scale(1.25);
+  z-index: 10;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  background: #1a1a1a;
+}
+
+/* Root container - full viewport */
 #root {
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   margin: 0;
   padding: 0;
+  background: linear-gradient(135deg, 
+    rgba(18, 18, 18, 0.95) 0%, 
+    rgba(30, 30, 30, 0.95) 50%, 
+    rgba(40, 40, 40, 0.95) 100%);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  min-height: 100vh;
+  overflow: hidden;
 }
 
-/* Reset styles for document editor */
+/* Document editor wrapper with glass morphism */
 .document-editor-wrapper {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: rgba(255, 255, 255, 0.02);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .document-editor-wrapper .e-documenteditor {
   height: 100%;
+  border-radius: inherit;
 }
 
 .document-editor-wrapper .e-documenteditor-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-/* Override any conflicting styles */
+/* Content box enforced */
 .e-documenteditor-container * {
   box-sizing: content-box;
 }
 
 .e-documenteditor-container {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Remove any padding that might affect the layout */
+/* Clean editor content background */
 .e-documenteditor-container .e-de-content {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
+/* Enhanced logo with premium effects */
 .logo {
   height: 6em;
   padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  will-change: filter, transform;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 4px 8px rgba(100, 108, 255, 0.2));
 }
 
+.logo:hover {
+  filter: drop-shadow(0 8px 24px rgba(100, 108, 255, 0.4))
+          drop-shadow(0 0 32px rgba(100, 108, 255, 0.3));
+  transform: translateY(-2px) scale(1.05);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 8px 24px rgba(97, 218, 251, 0.4))
+          drop-shadow(0 0 32px rgba(97, 218, 251, 0.3));
+}
+
+/* Smooth logo animation */
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -68,45 +136,98 @@
   }
 }
 
+/* Premium card styling */
 .card {
   padding: 2em;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Subtle read-more text */
 .read-the-docs {
-  color: #888;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s ease;
 }
 
-/* Ensure Syncfusion styles take precedence for the editor */
+.read-the-docs:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Syncfusion font inheritance */
 .document-editor-wrapper .e-documenteditor-container * {
   font-family: inherit;
 }
 
-/* Fix button styles */
-.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn {
-  height: auto;
-  margin: 0;
-  min-height: auto;
-  min-width: auto;
-  padding: 3px 6px;
-}
-
+/* Enhanced toolbar with glass morphism */
 .e-toolbar .e-toolbar-items {
-  background: #f8f9fa;
-  padding: 4px;
+  background: rgba(248, 249, 250, 0.8);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .e-toolbar .e-toolbar-items .e-toolbar-item {
   height: auto;
   margin: 2px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-/* Fix dropdown styles */
+.e-toolbar .e-toolbar-items .e-toolbar-item:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern button styling */
+.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn {
+  height: auto;
+  margin: 0;
+  min-height: 32px;
+  min-width: auto;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn:hover {
+  background: rgba(100, 108, 255, 0.1);
+  border-color: rgba(100, 108, 255, 0.3);
+  transform: translateY(-1px);
+}
+/* Dropdown button enhancements */
 .e-toolbar .e-toolbar-items .e-toolbar-item .e-dropdown-btn {
   height: auto;
-  padding: 3px 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-/* Fix icons in buttons */
+.e-toolbar .e-toolbar-items .e-toolbar-item .e-dropdown-btn:hover {
+  background: rgba(100, 108, 255, 0.1);
+  border-color: rgba(100, 108, 255, 0.3);
+}
+
+/* Icon styling */
 .e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn .e-icons {
   font-size: 16px;
   height: 16px;
@@ -114,34 +235,137 @@
   line-height: 16px;
 }
 
-/* Fix dialog styles */
+/* Premium dialog styling */
 .e-dialog {
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .e-dialog .e-dlg-header {
-  padding: 12px 24px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: 16px 16px 0 0;
 }
 
 .e-dialog .e-dlg-content {
-  padding: 20px 24px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
-/* Fix popup styles */
+/* Enhanced popup styling */
 .e-popup {
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.95);
 }
 
-/* Fix dropdown list styles */
+/* Modern dropdown list items */
 .e-dropdownbase .e-list-item {
-  line-height: 32px;
-  padding: 0 12px;
+  line-height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  margin: 4px 8px;
+  transition: all 0.2s ease;
 }
 
-/* Remove any conflicting Material-UI styles */
+.e-dropdownbase .e-list-item:hover {
+  background: rgba(100, 108, 255, 0.1);
+  transform: translateX(4px);
+}
+
+/* Hide conflicting Material-UI styles */
 .document-editor-wrapper .MuiButton-root {
   display: none;
+}
+
+/* Simple, Clean Accept/Reject Button Styling */
+.e-de-changes-pane .e-de-accept-btn,
+.e-de-changes-pane .e-de-reject-btn {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 6px 14px !important;
+  margin: 4px !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+/* Accept Button - Green */
+.e-de-changes-pane .e-de-accept-btn {
+  background-color: #4CAF50 !important;
+  color: white !important;
+}
+
+.e-de-changes-pane .e-de-accept-btn:hover {
+  background-color: #45a049 !important;
+}
+
+/* Reject Button - Red */
+.e-de-changes-pane .e-de-reject-btn {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.e-de-changes-pane .e-de-reject-btn:hover {
+  background-color: #da190b !important;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .e-de-changes-pane .e-de-accept-btn {
+    background-color: #4CAF50 !important;
+    color: white !important;
+  }
+
+  .e-de-changes-pane .e-de-accept-btn:hover {
+    background-color: #45a049 !important;
+  }
+
+  .e-de-changes-pane .e-de-reject-btn {
+    background-color: #f44336 !important;
+    color: white !important;
+  }
+
+  .e-de-changes-pane .e-de-reject-btn:hover {
+    background-color: #da190b !important;
+  }
+}
+
+/* Light mode adaptations */
+@media (prefers-color-scheme: light) {
+  #root {
+    background: linear-gradient(135deg, 
+      rgba(248, 249, 250, 0.95) 0%, 
+      rgba(241, 245, 249, 0.95) 50%, 
+      rgba(226, 232, 240, 0.95) 100%);
+  }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  
+  .read-the-docs {
+    color: rgba(0, 0, 0, 0.6);
+  }
 }

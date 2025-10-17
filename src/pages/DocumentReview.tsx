@@ -10,50 +10,29 @@ import {
     Snackbar,
     Alert,
     CircularProgress,
-    Tabs,
-    Tab,
+    Typography,
+    Tooltip,
 } from '@mui/material';
-import DocumentList, {DocumentWithApproverEmails} from './DocumentList';
-import DocumentEditor, { DocumentEditorRef } from '../DocumentEditor/DocumentEditor';
-import { Document } from '../../types';
-import { updateDocument, addApprovers, getDocument, getUserByEmail } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDocument } from '../../contexts/DocumentContext';
-import ResizableLayout from '../common/ResizableLayout';
-import AIChatSidebar from '../AIChatSidebar/AIChatSidebar';
+
+import {
+    PersonAdd,
+    Close,
+} from '@mui/icons-material';
+import DocumentList, {DocumentWithApproverEmails} from '../components/Dashboard/DocumentList';
+import DocumentTable from '../components/Dashboard/DocumentTable';
+import DocumentEditor, { DocumentEditorRef } from '../components/DocumentEditor/DocumentEditor';
+import { Document } from '../types';
+import { updateDocument, addApprovers, getDocument, getDocuments, getUserByEmail } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useDocument } from '../contexts/DocumentContext';
+import ResizableLayout from '../components/common/ResizableLayout';
+import AIChatSidebar from '../components/AIChatSidebar/AIChatSidebar';
 import SaveIcon from '@mui/icons-material/Save';
 import SendIcon from '@mui/icons-material/Send';
-import { getUserById } from '../../services/api';
-
-interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <Box
-            role="tabpanel"
-            hidden={value !== index}
-            id={`dashboard-tabpanel-${index}`}
-            aria-labelledby={`dashboard-tab-${index}`}
-            sx={{ 
-                height: '100%', 
-                display: value === index ? 'flex' : 'none', 
-                flexDirection: 'column' 
-            }}
-            {...other}
-        >
-            {value === index && children}
-        </Box>
-    );
-}
+import { getUserById } from '../services/api';
 
 
-const Dashboard: React.FC = () => {
+const DocumentReview: React.FC = () => {
     const { user } = useAuth();
     const { currentDocument, setCurrentDocument } = useDocument();
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
@@ -64,9 +43,9 @@ const Dashboard: React.FC = () => {
     const [showEditor, setShowEditor] = useState(true);
     const [isDocumentListCollapsed, setIsDocumentListCollapsed] = useState(false);
     const [isChatCollapsed, setIsChatCollapsed] = useState(false);
-    const [dashboardTab, setDashboardTab] = useState(0);
     const editorRef = useRef<DocumentEditorRef>(null);
     const [documents, setDocuments] = useState<DocumentWithApproverEmails[]>([]);
+    const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
 
     const [snackbar, setSnackbar] = useState<{
         open: boolean;
@@ -112,6 +91,39 @@ const Dashboard: React.FC = () => {
     
         return () => ws.close();
     }, []);
+
+    // Load documents on component mount
+    useEffect(() => {
+        const fetchDocuments = async () => {
+            setIsLoadingDocuments(true);
+            try {
+                const docs = await getDocuments();
+                // For each document, fetch approver emails
+                const docsWithEmails = await Promise.all(docs.map(async (doc) => {
+                    if (doc.approvers && doc.approvers.length > 0) {
+                        const approverUsers = await Promise.all(doc.approvers.map(async (id) => {
+                            try {
+                                const user = await getUserById(id);
+                                return user.email;
+                            } catch {
+                                return id; // fallback to id if user not found
+                            }
+                        }));
+                        return { ...doc, approverEmails: approverUsers };
+                    } else {
+                        return { ...doc, approverEmails: [] };
+                    }
+                }));
+                setDocuments(docsWithEmails);
+            } catch (err) {
+                console.error('Failed to fetch documents:', err);
+            } finally {
+                setIsLoadingDocuments(false);
+            }
+        };
+
+        fetchDocuments();
+    }, []);
     
     
 
@@ -156,37 +168,28 @@ const Dashboard: React.FC = () => {
     
 
     const handleDocumentSelect = async (document: Document) => {
-        try {
-            // Fetch fresh document content regardless of whether it's already selected
-            const freshDocument = await getDocument(document._id);
-            
-            // If user is reviewer and document status is new or pending, update to with_reviewer
-            if (user?.role === 'reviewer' && 
-                (freshDocument.status === 'new' || freshDocument.status === 'pending')) {
-                try {
-                    await updateDocument(freshDocument._id, {
-                        status: 'with_reviewer',
-                        notes: 'Document opened for review'
-                    });
-                    // Fetch the updated document after status change
-                    const updatedDocument = await getDocument(freshDocument._id);
-                    setCurrentDocument(updatedDocument);
-                } catch (error) {
-                    console.error('Failed to update document status:', error);
-                    // Still set the original document if update fails
-                    setCurrentDocument(freshDocument);
-                }
-            } else {
-                // Set the fresh document if no status update needed
-                setCurrentDocument(freshDocument);
+        // If a document is already selected and it's different from the new selection
+        if (currentDocument && currentDocument._id !== document._id) {
+            // Clear the current document first
+            setCurrentDocument(null);
+            // Then fetch the fresh content of the new document
+            await refreshDocument(document._id);
+        } else {
+            setCurrentDocument(document);
+        }
+        
+        // If user is reviewer and document status is new or pending, update to with_reviewer
+        if (user?.role === 'reviewer' && 
+            (document.status === 'new' || document.status === 'pending')) {
+            try {
+                await updateDocument(document._id, {
+                    status: 'with_reviewer',
+                    notes: 'Document opened for review'
+                });
+                await refreshDocument(document._id);
+            } catch (error) {
+                console.error('Failed to update document status:', error);
             }
-        } catch (error) {
-            console.error('Failed to load document:', error);
-            setSnackbar({
-                open: true,
-                message: 'Failed to load document',
-                severity: 'error'
-            });
         }
     };
 
@@ -195,12 +198,20 @@ const Dashboard: React.FC = () => {
 
         setIsSaving(true);
         try {
-            // Only save the document content without changing status
+            // First save the document content
             await editorRef.current.save();
+            
+            // Then update document status
+            await updateDocument(currentDocument._id, {
+                notes: 'Document saved successfully'
+            });
+
+            // Refresh the document to get the latest content and trigger list refresh
+            await refreshDocument(currentDocument._id);
 
             setSnackbar({
                 open: true,
-                message: 'Document saved successfully',
+                message: user?.role === 'reviewer' ? 'Document saved successfully' : 'Document sent back for review',
                 severity: 'success'
             });
         } catch (error) {
@@ -348,6 +359,10 @@ const Dashboard: React.FC = () => {
         }
     };
 
+    const handleCloseDocument = () => {
+        setCurrentDocument(null);
+    };
+
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
@@ -371,50 +386,106 @@ const Dashboard: React.FC = () => {
         if (user?.role === 'reviewer') {
             return (
                 <>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleOpenAssignDialog}
-                    >
-                        Assign Approver
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        sx={{ padding: 1, minWidth: 0, margin: 0 }}
-                    >
-                        {isSaving ? <CircularProgress size={24} /> : <SaveIcon />}
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleSendToApprover}
-                        disabled={(user?.role === 'reviewer' && (currentDocument?.status === 'with_approver' || currentDocument?.status === 'approved'))}
-                        sx={{ padding: 1, minWidth: 0, margin: 0 }}
-                    >
-                        <SendIcon fontSize="small" />
-                    </Button>
+                    <Tooltip title="Close Document" placement="right">
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            sx={{ 
+                                backgroundColor: '#666', 
+                                height: 40, 
+                                minWidth: 0,
+                                '&:hover': { backgroundColor: '#555' }
+                            }}
+                            onClick={handleCloseDocument}
+                            className="dock-item"
+                        >
+                            <Close fontSize="small" />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Assign Approver" placement="right">
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            sx={{ 
+                                backgroundColor: '#000', 
+                                height: 40, 
+                                minWidth: 0,
+                                '&:hover': { backgroundColor: '#111' }
+                            }}
+                            onClick={handleOpenAssignDialog}
+                            className="dock-item"
+                        >
+                            <PersonAdd fontSize="small" />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Save Document" placement="right">
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            sx={{ height: 40, minWidth: 0 }}
+                            className="dock-item"
+                        >
+                            {isSaving ? <CircularProgress size={24} /> : <SaveIcon fontSize="small" />}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Send to Approver" placement="right">
+                        <Button
+                            variant="outlined"
+                            color="success"
+                            onClick={handleSendToApprover}
+                            disabled={(user?.role === 'reviewer' && (currentDocument?.status === 'with_approver' || currentDocument?.status === 'approved'))}
+                            sx={{ 
+                                backgroundColor: '#000', 
+                                height: 40, 
+                                minWidth: 0,
+                                '&:hover': { backgroundColor: '#111' }
+                            }}
+                            className="dock-item"
+                        >
+                            <SendIcon fontSize="small" />
+                        </Button>
+                    </Tooltip>
                 </>
             );
         } else if (user?.role === 'approver') {
             return (
-                <>  
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        sx={{ padding: 1, minWidth: 0, margin: 0 }}
-                    >
-                        {isSaving ? <CircularProgress size={24} /> : <SaveIcon />}
-                    </Button>
+                <>
+                    <Tooltip title="Close Document" placement="right">
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            sx={{ 
+                                backgroundColor: '#666', 
+                                height: 40, 
+                                minWidth: 0,
+                                '&:hover': { backgroundColor: '#555' }
+                            }}
+                            onClick={handleCloseDocument}
+                            className="dock-item"
+                        >
+                            <Close fontSize="small" />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Save Document" placement="right">
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            sx={{ padding: 1, minWidth: 0, margin: 0 }}
+                            className="dock-item"
+                        >
+                            {isSaving ? <CircularProgress size={24} /> : <SaveIcon />}
+                        </Button>
+                    </Tooltip>
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleSave}
                         disabled={isSaving || isApproving || currentDocument?.status !== 'with_approver'}
+                        className="dock-item"
                     >
                         {isSaving ? <CircularProgress size={24} /> : 'Send Back for Review'}
                     </Button>
@@ -423,6 +494,7 @@ const Dashboard: React.FC = () => {
                         color="success"
                         onClick={handleApprove}
                         disabled={isApproving || isSaving || currentDocument?.status !== 'with_approver'}
+                        className="dock-item"
                     >
                         {isApproving ? <CircularProgress size={24} /> : 'Approve'}
                     </Button>
@@ -434,91 +506,38 @@ const Dashboard: React.FC = () => {
 
     return (
         <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            {/* Dashboard Navigation Tabs for Different Views */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: 'background.paper' }}>
-                <Tabs 
-                    value={dashboardTab} 
-                    onChange={(_, newValue) => setDashboardTab(newValue)}
-                    sx={{ px: 2 }}
-                >
-                    <Tab label="Documents Requiring Action" />
-                    <Tab label="All Documents" />
-                </Tabs>
-            </Box>
-
-            <TabPanel value={dashboardTab} index={0}>
-                {/* Documents Requiring Action View */}
-                <ResizableLayout
-                    leftPanel={
-                        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <DocumentList
+            {!currentDocument ? (
+                // Show table view when no document is selected
+                <Box sx={{ height: '100%', padding: 2, display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="h4" component="h1" sx={{ mb: 3, color: 'primary.main' }}>
+                        Document Review
+                    </Typography>
+                    <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+                        {isLoadingDocuments ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            <DocumentTable 
+                                documents={documents.map(doc => ({ ...doc }))} // Convert DocumentWithApproverEmails to Document
                                 onDocumentSelect={handleDocumentSelect}
-                                selectedDocument={currentDocument}
-                                documents={documents}
-                                setDocuments={setDocuments}
-                                refreshTrigger={refreshTrigger}
-                                dashboardType="action-required"
                                 userRole={user?.role}
-                            />
-                        </Box>
-                    }
-                    middlePanel={
-                        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            {showEditor && currentDocument && (
-                                <>
-                                    <Box sx={{ p: 2, display: 'flex', gap: 2, borderBottom: 1, borderColor: 'divider' }}>
-                                        {renderActionButtons()}
-                                    </Box>
-                                    <DocumentEditor
-                                        ref={editorRef}
-                                        documentId={currentDocument._id}
-                                        content={currentDocument.content}
-                                        userRole={user?.role}
-                                        documentStatus={currentDocument.status}
-                                        onSaveSuccess={() => {
-                                            setSnackbar({
-                                                open: true,
-                                                message: 'Document content saved',
-                                                severity: 'success'
-                                            });
-                                        }}
-                                        onSaveError={(error) => {
-                                            console.error('Save error:', error);
-                                            setSnackbar({
-                                                open: true,
-                                                message: 'Failed to save document content',
-                                                severity: 'error'
-                                            });
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </Box>
-                    }
-                    rightPanel={
-                        <AIChatSidebar onToggle={() => setIsChatCollapsed(!isChatCollapsed)}/>
-                    }
-                    isRightPanelVisible={!!currentDocument}
-                    isLeftPanelCollapsed={isDocumentListCollapsed}
-                    isRightPanelCollapsed={isChatCollapsed}
-                    onLeftToggle={() => setIsDocumentListCollapsed(!isDocumentListCollapsed)}
-                    onRightToggle={() => setIsChatCollapsed(!isChatCollapsed)}
-                />
-            </TabPanel>
-
-            <TabPanel value={dashboardTab} index={1}>
-                {/* All Documents View */}
-                <ResizableLayout
-                    leftPanel={
-                        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <DocumentList
-                                onDocumentSelect={handleDocumentSelect}
-                                selectedDocument={currentDocument}
-                                documents={documents}
-                                setDocuments={setDocuments}
-                                refreshTrigger={refreshTrigger}
                                 dashboardType="all-documents"
-                                userRole={user?.role}
+                            />
+                        )}
+                    </Box>
+                </Box>
+            ) : (
+                // Show document editor when a document is selected
+                <ResizableLayout
+                    leftPanel={
+                        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <DocumentList
+                                onDocumentSelect={handleDocumentSelect}
+                                selectedDocument={currentDocument}
+                                documents={documents}
+                                setDocuments={setDocuments}
+                                refreshTrigger={refreshTrigger}
                             />
                         </Box>
                     }
@@ -526,7 +545,8 @@ const Dashboard: React.FC = () => {
                         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             {showEditor && currentDocument && (
                                 <>
-                                    <Box sx={{ p: 2, display: 'flex', gap: 2, borderBottom: 1, borderColor: 'divider' }}>
+                                    {/* macOS-style floating dock for action buttons */}
+                                    <Box className="mac-dock">
                                         {renderActionButtons()}
                                     </Box>
                                     <DocumentEditor
@@ -564,8 +584,7 @@ const Dashboard: React.FC = () => {
                     onLeftToggle={() => setIsDocumentListCollapsed(!isDocumentListCollapsed)}
                     onRightToggle={() => setIsChatCollapsed(!isChatCollapsed)}
                 />
-            </TabPanel>
-            
+            )}
             <Dialog open={isAssignDialogOpen} onClose={handleCloseAssignDialog}>
                 <DialogTitle>Assign Approver</DialogTitle>
                 <DialogContent>
@@ -603,4 +622,4 @@ const Dashboard: React.FC = () => {
     );
 };
 
-export default Dashboard; 
+export default DocumentReview;

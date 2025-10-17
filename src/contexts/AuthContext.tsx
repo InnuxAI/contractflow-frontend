@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { User, AuthContextType } from '../types';
-import { login as apiLogin } from '../services/api';
+import { login as apiLogin, logout as apiLogout } from '../services/api';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -54,9 +54,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
     }, []);
 
-    const logout = useCallback(() => {
+    const logout = useCallback(async () => {
+        try {
+            console.log('Calling backend logout...');
+            await apiLogout();
+            console.log('Backend logout successful');
+        } catch (error) {
+            console.error('Backend logout failed:', error);
+            // Continue with frontend logout even if backend fails
+        }
+        
         localStorage.removeItem('token');
         setUser(null);
+        console.log('Frontend logout completed');
     }, []);
 
     const value = {

@@ -146,7 +146,7 @@ const ClauseManager: React.FC = () => {
 
     const fetchClauses = async () => {
         try {
-            const response = await axios.get<Clause[]>('https://contractflow-backend.vercel.app/api/clauses');
+            const response = await axios.get<Clause[]>('http://127.0.0.1:8000/api/clauses');
             setClauses(response.data);
             const uniqueDomains = Array.from(new Set(response.data.map(clause => clause.domain)));
             setDomains(uniqueDomains);
@@ -164,14 +164,14 @@ const ClauseManager: React.FC = () => {
         e.preventDefault();
         try {
             if (editingClause) {
-                await axios.put(`https://contractflow-backend.vercel.app/api/clauses/${editingClause.id}`, newClause);
+                await axios.put(`http://127.0.0.1:8000/api/clauses/${editingClause.id}`, newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause updated successfully',
                     severity: 'success'
                 });
             } else {
-                await axios.post('https://contractflow-backend.vercel.app/api/clauses', newClause);
+                await axios.post('http://127.0.0.1:8000/api/clauses', newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause created successfully',
@@ -203,7 +203,7 @@ const ClauseManager: React.FC = () => {
         try {
             await Promise.all(
                 clausesToDelete.map(id => 
-                    axios.delete(`https://contractflow-backend.vercel.app/api/clauses/${id}`)
+                    axios.delete(`http://127.0.0.1:8000/api/clauses/${id}`)
                 )
             );
             fetchClauses();

@@ -9,7 +9,7 @@ import {
     Editor,
     EditorHistory
 } from '@syncfusion/ej2-react-documenteditor';
-import { updateDocument } from '../../services/api';
+import { saveDocumentContent } from '../../services/api';
 import { Box, Paper, Typography } from '@mui/material';
 import '../../App.css';
 
@@ -40,10 +40,10 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
         if (!userRole || !documentStatus) return true;
         if (documentStatus === 'approved') return true;
         if (userRole === 'approver') {
-            return documentStatus !== 'changes_made';
+            return documentStatus !== 'with_approver';
         }
         if (userRole === 'reviewer') {
-            return documentStatus === 'changes_made';
+            return documentStatus === 'with_approver' || documentStatus === 'approved';
         }
 
         return false;
@@ -59,8 +59,8 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
                 const sfdt = editor.documentEditor.serialize();
                 console.log('Document serialized, length:', sfdt.length);
                 
-                // Save the SFDT content directly (it will be base64 encoded on the server)
-                await updateDocument(documentId, {
+                // Use save-specific endpoint for content-only saves
+                await saveDocumentContent(documentId, {
                     content: sfdt
                 });
                 console.log('Document saved successfully');
@@ -95,6 +95,18 @@ const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
             }
         }
     }, [content, isReadOnly, onSaveError]);
+    
+
+    React.useEffect(() => {
+        const editor = editorRef.current;
+        if (editor) {
+            console.log('Status changed, updating readonly state...');
+            editor.documentEditor.isReadOnly = isReadOnly;
+            editor.enableToolbar = !isReadOnly;
+        }
+    }, [documentStatus, isReadOnly]);
+    
+    
 
     return (
         <Box sx={{ height: '100%', position: 'relative' }}>

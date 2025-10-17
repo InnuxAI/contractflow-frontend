@@ -4,7 +4,7 @@ import './index.css'
 import App from './App'
 import { registerLicense } from '@syncfusion/ej2-base';
 
-registerLicense("ORg4AjUWIQA/Gnt2XFhhQlJHfVpdX2BWfFN0QHNddVtwflZOcC0sT3RfQFhjTXxQdkFmWH5bdXJVT2teWA==");
+registerLicense("Ngo9BigBOggjHTQxAR8/V1JEaF5cXmRCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXdfeXRWQmFdWUVzX0dWYEk=");
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

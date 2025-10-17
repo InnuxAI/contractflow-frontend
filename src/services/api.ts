@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Document, DocumentStatus } from '../types';
 
-const API_URL = 'https://contractflow-backend.vercel.app';
+const API_URL = 'http://127.0.0.1:8000';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -32,6 +32,11 @@ export const login = async (email: string, password: string) => {
     return response.data;
 };
 
+export const logout = async () => {
+    const response = await api.post('/logout');
+    return response.data;
+};
+
 export const getDocuments = async (status?: DocumentStatus) => {
     const params = status ? { status } : {};
     const response = await api.get<Document[]>('/documents', { params });
@@ -48,6 +53,11 @@ export const updateDocument = async (id: string, data: Partial<Document>) => {
     return response.data;
 };
 
+export const saveDocumentContent = async (id: string, data: Partial<Document>) => {
+    const response = await api.post(`/documents/${id}/save`, data);
+    return response.data;
+};
+
 export const getUserByEmail = async (email: string) => {
     const response = await api.get(`/users/email/${email}`);
     return response.data;
@@ -58,17 +68,11 @@ export const getUserById = async (id: string) => {
     return response.data;
 };
 
-export const addApprovers = async (documentId: string, approverEmails: string[]) => {
-    // First get the user IDs for each email
-    const approverIds = await Promise.all(
-        approverEmails.map(async (email) => {
-            const user = await getUserByEmail(email);
-            return user._id;
-        })
-    );
-    
-    const response = await api.post(`/documents/${documentId}/approvers`, approverIds);
-    return response.data;
+export const addApprovers = async (documentId: string, approverIds: string[]): Promise<any> => {
+  const response = await api.post(`/documents/${documentId}/approvers`, {
+    approver_ids: approverIds
+  });
+  return response.data;
 };
 
 export default api; 

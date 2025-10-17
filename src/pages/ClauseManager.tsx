@@ -19,7 +19,6 @@ import {
     Snackbar,
     Alert,
     Chip,
-    Grid,
     Slider,
     FormControlLabel,
     Switch,
@@ -29,6 +28,7 @@ import {
     Drawer,
     Divider
 } from '@mui/material';
+import { Masonry } from '@mui/lab';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterIcon, Close as CloseIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -100,6 +100,7 @@ const drawerWidth = '30vw';
 const ClauseManager: React.FC = () => {
     const theme = useTheme();
     const [clauses, setClauses] = useState<Clause[]>([]);
+    const [selectedDomain, setSelectedDomain] = useState<string>('All');
     const [filterState, setFilterState] = useState<FilterState>({
         domain: 'All',
         lastModifiedStart: null,
@@ -108,6 +109,8 @@ const ClauseManager: React.FC = () => {
         createdEnd: null
     });
     const [isOpen, setIsOpen] = useState(false);
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [selectedClause, setSelectedClause] = useState<Clause | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [clauseToDelete, setClauseToDelete] = useState<string | null>(null);
     const [editingClause, setEditingClause] = useState<Clause | null>(null);
@@ -126,8 +129,8 @@ const ClauseManager: React.FC = () => {
         message: '',
         severity: 'success'
     });
-    const [columns, setColumns] = useState(1);
-    const [isGrid, setIsGrid] = useState(false);
+    const [columns, setColumns] = useState(3);
+    const [isGrid, setIsGrid] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
@@ -136,7 +139,7 @@ const ClauseManager: React.FC = () => {
 
     const fetchClauses = async () => {
         try {
-            const response = await axios.get<Clause[]>('https://contractflow-backend.vercel.app/api/clauses');
+            const response = await axios.get<Clause[]>('http://127.0.0.1:8000/api/clauses');
             setClauses(response.data);
             const uniqueDomains = Array.from(new Set(response.data.map(clause => clause.domain)));
             setDomains(['All', ...uniqueDomains]);
@@ -154,14 +157,14 @@ const ClauseManager: React.FC = () => {
         e.preventDefault();
         try {
             if (editingClause) {
-                await axios.put(`https://contractflow-backend.vercel.app/api/clauses/${editingClause.id}`, newClause);
+                await axios.put(`http://127.0.0.1:8000/api/clauses/${editingClause.id}`, newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause updated successfully',
                     severity: 'success'
                 });
             } else {
-                await axios.post('https://contractflow-backend.vercel.app/api/clauses', newClause);
+                await axios.post('http://127.0.0.1:8000/api/clauses', newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause created successfully',
@@ -206,7 +209,7 @@ const ClauseManager: React.FC = () => {
         if (!clauseToDelete) return;
         
         try {
-            await axios.delete(`https://contractflow-backend.vercel.app/api/clauses/${clauseToDelete}`);
+            await axios.delete(`http://127.0.0.1:8000/api/clauses/${clauseToDelete}`);
             fetchClauses();
             setSnackbar({
                 open: true,
@@ -243,9 +246,15 @@ const ClauseManager: React.FC = () => {
         });
     };
 
+    // Get clause count for each domain
+    const getDomainClauseCount = (domain: string) => {
+        if (domain === 'All') return clauses.length;
+        return clauses.filter(clause => clause.domain === domain).length;
+    };
+
     const filteredClauses = clauses.filter(clause => {
         // Domain filter
-        if (filterState.domain !== 'All' && clause.domain !== filterState.domain) {
+        if (selectedDomain !== 'All' && clause.domain !== selectedDomain) {
             return false;
         }
 
@@ -298,15 +307,22 @@ const ClauseManager: React.FC = () => {
                 <Paper
                     sx={{
                         p: 3,
-                        height: '100%',
+                        width: '100%',
                         cursor: 'pointer',
                         backgroundColor: theme.palette.background.paper,
                         border: '1px solid',
                         borderColor: theme.palette.divider,
                         transition: 'all 0.2s ease-in-out',
+                        borderRadius: 2,
                         '&:hover': {
                             backgroundColor: theme.palette.action.hover,
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme.shadows[4]
                         }
+                    }}
+                    onClick={() => {
+                        setSelectedClause(clause);
+                        setDetailModalOpen(true);
                     }}
                 >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -365,12 +381,17 @@ const ClauseManager: React.FC = () => {
                         }}
                     />
                     <Typography
-                        variant="body1"
+                        variant="body2"
                         color="text.secondary"
                         sx={{
                             lineHeight: 1.6,
                             letterSpacing: '0.00938em',
-                            mb: 2
+                            mb: 2,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 4,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                         }}
                     >
                         {clause.description}
@@ -490,7 +511,7 @@ const ClauseManager: React.FC = () => {
                                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     View Options
                                 </Typography>
-                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                     <FormControlLabel
                                         control={
                                             <Switch
@@ -502,15 +523,24 @@ const ClauseManager: React.FC = () => {
                                     />
 
                                     {isGrid && (
-                                        <Box sx={{ width: 200 }}>
-                                            <Typography gutterBottom>Columns: {columns}</Typography>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Typography variant="caption" gutterBottom sx={{ display: 'block' }}>
+                                                Columns: {columns}
+                                            </Typography>
                                             <Slider
                                                 value={columns}
                                                 onChange={(_, value) => setColumns(value as number)}
                                                 min={1}
-                                                max={4}
+                                                max={6}
                                                 step={1}
-                                                marks
+                                                marks={[
+                                                    { value: 1, label: '1' },
+                                                    { value: 2, label: '2' },
+                                                    { value: 3, label: '3' },
+                                                    { value: 4, label: '4' },
+                                                    { value: 5, label: '5' },
+                                                    { value: 6, label: '6' }
+                                                ]}
                                             />
                                         </Box>
                                     )}
@@ -535,59 +565,182 @@ const ClauseManager: React.FC = () => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    p: 4,
-                    width: '100%',
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    height: '100%',
                     display: 'flex',
-                    flexDirection: 'column',
+                    height: '100%',
+                    overflow: 'hidden',
                 }}
             >
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    mb: 3,
-                }}>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 600, letterSpacing: '-0.5px' }}>
-                        Clause Manager
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<FilterIcon />}
-                            onClick={() => setShowFilters(!showFilters)}
+                {/* Domain Sidebar */}
+                <Box
+                    sx={{
+                        width: '280px',
+                        borderRight: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: theme.palette.background.paper,
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }}
+                >
+                    <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                        <Typography 
+                            variant="h6" 
+                            sx={{ 
+                                fontWeight: 600,
+                                mb: 2,
+                            }}
                         >
-                            {showFilters ? 'Hide Filters' : 'Show Filters'}
-                        </Button>
+                            Domains
+                        </Typography>
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
-                            onClick={() => {
-                                setEditingClause(null);
-                                setNewClause({ title: '', description: '', domain: '' });
-                                setIsOpen(true);
+                            onClick={() => setIsOpen(true)}
+                            fullWidth
+                            sx={{
+                                borderRadius: '8px',
+                                textTransform: 'none',
+                                fontWeight: 600,
                             }}
                         >
                             Add New Clause
                         </Button>
                     </Box>
+                    
+                    <Box sx={{ flex: 1, overflow: 'auto' }}>
+                        <List sx={{ p: 1 }}>
+                            {domains.map((domain) => {
+                                const count = getDomainClauseCount(domain);
+                                const isSelected = selectedDomain === domain;
+                                const pillColors = getDomainPillColors(domain);
+                                
+                                return (
+                                    <ListItem
+                                        key={domain}
+                                        sx={{
+                                            mb: 0.5,
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            backgroundColor: isSelected ? 'action.selected' : 'transparent',
+                                            '&:hover': {
+                                                backgroundColor: isSelected ? 'action.selected' : 'action.hover',
+                                            },
+                                            transition: 'background-color 0.2s ease',
+                                        }}
+                                        onClick={() => setSelectedDomain(domain)}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                            <Box
+                                                sx={{
+                                                    width: 8,
+                                                    height: 8,
+                                                    borderRadius: '50%',
+                                                    backgroundColor: domain === 'All' 
+                                                        ? theme.palette.primary.main 
+                                                        : pillColors.text,
+                                                    mr: 2,
+                                                }}
+                                            />
+                                            <Box sx={{ flex: 1 }}>
+                                                <Typography 
+                                                    variant="body2" 
+                                                    sx={{ 
+                                                        fontWeight: isSelected ? 600 : 500,
+                                                        color: isSelected ? 'primary.main' : 'text.primary'
+                                                    }}
+                                                >
+                                                    {domain}
+                                                </Typography>
+                                            </Box>
+                                            <Chip
+                                                label={count}
+                                                size="small"
+                                                sx={{
+                                                    height: 20,
+                                                    fontSize: '0.7rem',
+                                                    backgroundColor: isSelected 
+                                                        ? 'primary.main' 
+                                                        : 'action.hover',
+                                                    color: isSelected 
+                                                        ? 'primary.contrastText' 
+                                                        : 'text.secondary',
+                                                }}
+                                            />
+                                        </Box>
+                                    </ListItem>
+                                );
+                            })}
+                        </List>
+                    </Box>
                 </Box>
 
-                <Box sx={{ 
-                    flex: 1,
-                    overflow: 'auto',
-                    position: 'relative',
-                    '&::-webkit-scrollbar': {
-                        width: '8px',
-                    },
+                {/* Clauses Content */}
+                <Box
+                    sx={{
+                        flex: 1,
+                        p: 3,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                    }}
+                >
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        mb: 3,
+                        flexShrink: 0,
+                    }}>
+                        <Typography 
+                            variant="h4" 
+                            component="h1" 
+                            sx={{ 
+                                fontWeight: 700,
+                                fontSize: '1.75rem',
+                                letterSpacing: '-0.02em',
+                                background: theme.palette.mode === 'light'
+                                    ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)'
+                                    : 'linear-gradient(135deg, #60a5fa 0%, #c084fc 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                            }}
+                        >
+                            {selectedDomain === 'All' ? 'All Clauses' : `${selectedDomain} Clauses`}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                            <Button
+                                variant="outlined"
+                                startIcon={<FilterIcon />}
+                                onClick={() => setShowFilters(!showFilters)}
+                                sx={{
+                                    borderRadius: '8px',
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    py: 1,
+                                }}
+                            >
+                                {showFilters ? 'Hide Filters' : 'Show Filters'}
+                            </Button>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{ 
+                        flex: 1,
+                        overflow: 'hidden auto',
+                        position: 'relative',
+                        width: '100%',
+                        '&::-webkit-scrollbar': {
+                            width: '6px',
+                        },
                     '&::-webkit-scrollbar-track': {
-                        background: theme.palette.background.paper,
+                        background: 'transparent',
                     },
                     '&::-webkit-scrollbar-thumb': {
                         background: theme.palette.divider,
-                        borderRadius: '4px',
+                        borderRadius: '3px',
+                        '&:hover': {
+                            background: theme.palette.text.secondary,
+                        }
                     },
                 }}>
                     <AnimatePresence mode="wait">
@@ -603,27 +756,19 @@ const ClauseManager: React.FC = () => {
                                     paddingRight: '8px',
                                 }}
                             >
-                                <Grid container spacing={3}>
+                                <Masonry columns={columns} spacing={3}>
                                     {filteredClauses.map((clause, index) => (
-                                        <Grid 
-                                            item 
-                                            xs={12} 
-                                            sm={columns >= 2 ? 6 : 12}
-                                            md={columns >= 3 ? 4 : columns === 2 ? 6 : 12}
-                                            lg={columns === 4 ? 3 : columns === 3 ? 4 : columns === 2 ? 6 : 12}
+                                        <motion.div
                                             key={clause.id}
+                                            variants={gridItemVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            transition={{ delay: index * 0.05 }}
                                         >
-                                            <motion.div
-                                                variants={gridItemVariants}
-                                                initial="hidden"
-                                                animate="visible"
-                                                transition={{ delay: index * 0.05 }}
-                                            >
-                                                {clauseCard(clause)}
-                                            </motion.div>
-                                        </Grid>
+                                            {clauseCard(clause)}
+                                        </motion.div>
                                     ))}
-                                </Grid>
+                                </Masonry>
                             </motion.div>
                         ) : (
                             <motion.div
@@ -640,26 +785,35 @@ const ClauseManager: React.FC = () => {
                                 <Paper
                                     sx={{
                                         height: '100%',
-                                        borderRadius: 2,
+                                        borderRadius: '12px',
                                         backgroundColor: theme.palette.background.paper,
                                         border: '1px solid',
                                         borderColor: theme.palette.divider,
-                                        overflow: 'hidden'
+                                        overflow: 'hidden',
+                                        backdropFilter: 'blur(12px)',
+                                        WebkitBackdropFilter: 'blur(12px)',
+                                        boxShadow: theme.palette.mode === 'light' 
+                                            ? '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+                                            : '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3)',
                                     }}
                                 >
                                     <List sx={{ 
                                         p: 0, 
                                         height: '100%', 
-                                        overflow: 'auto',
+                                        overflow: 'hidden auto',
+                                        width: '100%',
                                         '&::-webkit-scrollbar': {
-                                            width: '8px',
+                                            width: '6px',
                                         },
                                         '&::-webkit-scrollbar-track': {
-                                            background: theme.palette.background.paper,
+                                            background: 'transparent',
                                         },
                                         '&::-webkit-scrollbar-thumb': {
                                             background: theme.palette.divider,
-                                            borderRadius: '4px',
+                                            borderRadius: '3px',
+                                            '&:hover': {
+                                                background: theme.palette.text.secondary,
+                                            }
                                         },
                                     }}>
                                         {filteredClauses.map((clause, index) => (
@@ -671,9 +825,18 @@ const ClauseManager: React.FC = () => {
                                             >
                                                 <ListItem
                                                     sx={{
-                                                        p: 3,
+                                                        p: 2.5,
                                                         borderBottom: '1px solid',
                                                         borderColor: theme.palette.divider,
+                                                        borderRadius: '8px',
+                                                        mx: 1,
+                                                        mb: 0.5,
+                                                        width: 'calc(100% - 16px)',
+                                                        transition: 'all 0.2s ease',
+                                                        '&:hover': {
+                                                            backgroundColor: theme.palette.action.hover,
+                                                            transform: 'translateX(2px)',
+                                                        },
                                                         '&:last-child': {
                                                             borderBottom: 'none'
                                                         }
@@ -801,6 +964,138 @@ const ClauseManager: React.FC = () => {
                 </AnimatePresence>
 
                 <AnimatePresence>
+                    {detailModalOpen && selectedClause && (
+                        <motion.div
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            variants={dialogVariants}
+                        >
+                            <Dialog
+                                open={detailModalOpen}
+                                onClose={() => setDetailModalOpen(false)}
+                                maxWidth="md"
+                                fullWidth
+                                PaperProps={{
+                                    component: motion.div,
+                                    variants: dialogVariants,
+                                    sx: {
+                                        borderRadius: 2,
+                                        border: '1px solid',
+                                        borderColor: theme.palette.divider,
+                                        maxHeight: '80vh'
+                                    }
+                                }}
+                            >
+                                <DialogTitle sx={{
+                                    fontWeight: 600,
+                                    letterSpacing: '-0.25px',
+                                    pb: 2,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'flex-start'
+                                }}>
+                                    <Box>
+                                        <Typography variant="h5" component="div" sx={{ fontWeight: 600, mb: 1 }}>
+                                            {selectedClause.title}
+                                        </Typography>
+                                        <Chip
+                                            label={selectedClause.domain}
+                                            size="small"
+                                            sx={{
+                                                backgroundColor: getDomainPillColors(selectedClause.domain).background,
+                                                color: getDomainPillColors(selectedClause.domain).text,
+                                                fontWeight: 500
+                                            }}
+                                        />
+                                    </Box>
+                                    <IconButton
+                                        onClick={() => setDetailModalOpen(false)}
+                                        sx={{ mt: -1, mr: -1 }}
+                                    >
+                                        <CloseIcon />
+                                    </IconButton>
+                                </DialogTitle>
+                                <DialogContent>
+                                    <Box sx={{ mb: 3 }}>
+                                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                            Description
+                                        </Typography>
+                                        <Typography 
+                                            variant="body1" 
+                                            sx={{ 
+                                                lineHeight: 1.7,
+                                                whiteSpace: 'pre-wrap',
+                                                color: theme.palette.text.primary
+                                            }}
+                                        >
+                                            {selectedClause.description}
+                                        </Typography>
+                                    </Box>
+                                    
+                                    <Box sx={{ 
+                                        mt: 3, 
+                                        p: 2, 
+                                        backgroundColor: theme.palette.action.hover,
+                                        borderRadius: 2 
+                                    }}>
+                                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                                            Metadata
+                                        </Typography>
+                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                                            <Box>
+                                                <Typography variant="caption" color="text.disabled">
+                                                    Created
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {new Date(selectedClause.created_at).toLocaleString()}
+                                                </Typography>
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="caption" color="text.disabled">
+                                                    Last Modified
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {new Date(selectedClause.last_modified).toLocaleString()}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </Box>
+                                </DialogContent>
+                                <DialogActions sx={{ p: 3, pt: 0 }}>
+                                    <Button
+                                        onClick={() => {
+                                            setDetailModalOpen(false);
+                                            handleEdit(selectedClause);
+                                        }}
+                                        startIcon={<EditIcon />}
+                                        variant="outlined"
+                                        sx={{
+                                            textTransform: 'none',
+                                            fontWeight: 500,
+                                            borderRadius: '8px'
+                                        }}
+                                    >
+                                        Edit Clause
+                                    </Button>
+                                    <Button
+                                        onClick={() => setDetailModalOpen(false)}
+                                        variant="contained"
+                                        sx={{
+                                            textTransform: 'none',
+                                            fontWeight: 500,
+                                            borderRadius: '8px'
+                                        }}
+                                    >
+                                        Close
+                                    </Button>
+                                </DialogActions>
+                            </Dialog>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
                     {deleteDialogOpen && (
                         <motion.div
                             initial="hidden"
@@ -878,6 +1173,7 @@ const ClauseManager: React.FC = () => {
                         {snackbar.message}
                     </Alert>
                 </Snackbar>
+                </Box>
             </Box>
         </Box>
     );

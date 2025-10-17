@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Box, AppBar, Toolbar, Typography, IconButton, Button, Avatar, Chip, Dialog, List, ListItem, ListItemText, ListItemIcon, Divider } from '@mui/material';
-import { Brightness4, Brightness7, Logout as LogoutIcon, Dashboard as DashboardIcon, Article as ArticleIcon, Assignment as ReviewIcon, CheckCircle } from '@mui/icons-material';
+import React, { useEffect } from 'react';
+import { Box, AppBar, Toolbar, Typography, IconButton, Button, Avatar, Chip } from '@mui/material';
+import { Brightness4, Brightness7, Logout as LogoutIcon, Dashboard as DashboardIcon, Article as ArticleIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
@@ -10,8 +10,6 @@ const Layout: React.FC = () => {
     const { mode, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
-
-    const [userModalOpen, setUserModalOpen] = useState(false);
 
     useEffect(() => {
         console.log('Current user:', user);
@@ -36,26 +34,38 @@ const Layout: React.FC = () => {
                 position="static" 
                 elevation={0}
                 sx={{
-                    bgcolor: mode === 'light' ? '#ffffff' : 'background.paper',
+                    bgcolor: 'background.paper',
                     borderBottom: 1,
-                    borderColor: mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'divider',
+                    borderColor: 'divider',
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
-                    boxShadow: mode === 'light' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                    background: mode === 'light' 
+                        ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 100%)'
+                        : 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                    boxShadow: mode === 'light' 
+                        ? '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+                        : '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3)',
                 }}
             >
                 <Toolbar sx={{ minHeight: '72px !important', px: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
-                        <img
-                            src="/mainlogo.png"
-                            alt="Innux AI ContractFlow"
-                            style={{
+                        <Box
+                            sx={{
                                 width: 40,
                                 height: 40,
                                 borderRadius: 2,
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontWeight: 700,
+                                fontSize: '1.2rem',
+                                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
                             }}
-                        />
+                        >
+                            D
+                        </Box>
                         <Typography 
                             variant="h6" 
                             component="div" 
@@ -64,18 +74,8 @@ const Layout: React.FC = () => {
                                 fontWeight: 700,
                                 fontSize: '1.375rem',
                                 background: mode === 'light' 
-                                    ? 'linear-gradient(90deg, #1976d2 0%, #42a5f5 50%, #1976d2 100%)'
-                                    : 'linear-gradient(90deg, rgba(131, 131, 131, 0.5) 0%, rgba(255, 255, 255, 0.76) 50%, rgba(148, 148, 148, 0.5) 100%)',
-                                backgroundSize: '200% 200%',
-                                animation: 'gradient 5s linear infinite',
-                                '@keyframes gradient': {
-                                    '0%': {
-                                        backgroundPosition: '0% 50%',
-                                    },
-                                    '100%': {
-                                        backgroundPosition: '-200% 50%',
-                                    },
-                                },
+                                    ? 'linear-gradient(135deg, #1e293b 0%, #3b82f6 100%)'
+                                    : 'linear-gradient(135deg, #f8fafc 0%, #60a5fa 100%)',
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
                                 backgroundClip: 'text',
@@ -117,36 +117,6 @@ const Layout: React.FC = () => {
                                     }}
                                 >
                                     Dashboard
-                                </Button>
-                                <Button
-                                    variant={isActive('/document-review') ? 'contained' : 'text'}
-                                    onClick={() => navigate('/document-review')}
-                                    startIcon={<ReviewIcon />}
-                                    sx={{
-                                        borderRadius: 2,
-                                        px: 3,
-                                        py: 1,
-                                        fontWeight: 600,
-                                        textTransform: 'none',
-                                        transition: 'all 0.2s ease',
-                                        ...(isActive('/document-review') ? {
-                                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                                            '&:hover': {
-                                                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                                                transform: 'translateY(-1px)',
-                                            }
-                                        } : {
-                                            color: 'text.secondary',
-                                            '&:hover': {
-                                                bgcolor: 'action.hover',
-                                                color: 'primary.main',
-                                                transform: 'translateY(-1px)',
-                                            }
-                                        })
-                                    }}
-                                >
-                                    Document Review
                                 </Button>
                                 <Button
                                     variant={isActive('/clause-manager') ? 'contained' : 'text'}
@@ -191,10 +161,7 @@ const Layout: React.FC = () => {
                                 border: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
                                 backdropFilter: 'blur(12px)',
                                 WebkitBackdropFilter: 'blur(12px)',
-                            }}
-                            
-                            onClick={() => setUserModalOpen(true)}
-                            >
+                            }}>
                                 <Avatar 
                                     sx={{ 
                                         width: 32, 
@@ -290,83 +257,11 @@ const Layout: React.FC = () => {
                     overflow: 'hidden',
                     background: mode === 'light' 
                         ? 'linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 50%, rgba(226, 232, 240, 0.95) 100%)'
-                        : '#1c1c1c',
+                        : 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(45, 60, 80, 0.95) 100%)',
                 }}
             >
                 <Outlet />
             </Box>
-            
-            {/* User Info Modal */}
-            <Dialog
-                open={userModalOpen}
-                onClose={() => setUserModalOpen(false)}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 3,
-                        background: 'rgba(32,32,32,0.97)',
-                        color: '#fff',
-                        p: 0,
-                    }
-                }}
-            >
-                <Box sx={{ p: 4 }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
-                        User Information
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
-                        <Avatar
-                            sx={{
-                                width: 56,
-                                height: 56,
-                                bgcolor: '#6aa0ff',
-                                fontSize: 28,
-                                border: '3px solid #fff',
-                                boxShadow: '0 2px 8px rgba(106,160,255,0.25)',
-                            }}
-                        >
-                            {user?.email?.[0]?.toUpperCase() || 'U'}
-                        </Avatar>
-                        <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                {user?.email || 'user@example.com'}
-                            </Typography>
-                            <Chip
-                                label={user?.role?.toUpperCase() || 'REVIEWER'}
-                                color="primary"
-                                size="small"
-                                sx={{
-                                    mt: 1,
-                                    fontWeight: 600,
-                                    letterSpacing: 1,
-                                    bgcolor: '#2563eb',
-                                    color: '#fff',
-                                }}
-                            />
-                        </Box>
-                    </Box>
-                    <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.08)' }} />
-                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>
-                        Role Permissions:
-                    </Typography>
-                    <List dense disablePadding>
-                        {[
-                            'Review documents',
-                            'Assign approvers',
-                            'Send to approval',
-                        ].map((perm) => (
-                            <ListItem key={perm} sx={{ py: 0, color: '#e0e0e0' }}>
-                                <ListItemIcon sx={{ minWidth: 32, color: '#7dd87d' }}>
-                                    <CheckCircle fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText primary={perm} />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
-            </Dialog>
-
         </Box>
     );
 };

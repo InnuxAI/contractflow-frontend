@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface ResizableLayoutProps {
     leftPanel: React.ReactNode;
@@ -8,6 +10,10 @@ interface ResizableLayoutProps {
     initialLeftWidth?: number;
     initialRightWidth?: number;
     isRightPanelVisible?: boolean;
+    isLeftPanelCollapsed?: boolean;
+    isRightPanelCollapsed?: boolean;
+    onLeftToggle?: () => void;
+    onRightToggle?: () => void;
 }
 
 const ResizableLayout: React.FC<ResizableLayoutProps> = ({
@@ -16,7 +22,11 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
     rightPanel,
     initialLeftWidth = 300,
     initialRightWidth = 300,
-    isRightPanelVisible = true
+    isRightPanelVisible = true,
+    isLeftPanelCollapsed = false,
+    isRightPanelCollapsed = false,
+    onLeftToggle,
+    onRightToggle
 }) => {
     const [leftWidth, setLeftWidth] = useState(initialLeftWidth);
     const [rightWidth, setRightWidth] = useState(initialRightWidth);
@@ -77,31 +87,71 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
         }}>
             {/* Left Panel */}
             <Box sx={{ 
-                width: leftWidth,
+                width: isLeftPanelCollapsed ? '50px' : leftWidth,
                 height: '100%',
                 overflow: 'hidden',
                 borderRight: 1,
                 borderColor: 'divider',
                 position: 'relative',
-                flexShrink: 0
+                flexShrink: 0,
+                transition: 'width 0.3s ease',
+                backgroundColor: 'background.paper'
             }}>
-                {leftPanel}
+                {isLeftPanelCollapsed ? (
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'flex-start',
+                        pt: 2
+                    }}>
+                        <IconButton onClick={onLeftToggle} size="small">
+                            <MenuIcon />
+                        </IconButton>
+                    </Box>
+                ) : (
+                    <>
+                        <Box sx={{ 
+                            position: 'absolute', 
+                            top: 8, 
+                            right: 8, 
+                            zIndex: 1000,
+                            backgroundColor: 'background.paper',
+                            borderRadius: '50%',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                        }}>
+                            <IconButton 
+                                onClick={onLeftToggle} 
+                                size="small"
+                                sx={{
+                                    '&:hover': {
+                                        backgroundColor: 'action.hover',
+                                    }
+                                }}
+                            >
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
+                        {leftPanel}
+                    </>
+                )}
             </Box>
 
-            {/* Resizable Handle */}
-            <Box
-                sx={{
-                    width: '4px',
-                    height: '100%',
-                    cursor: 'col-resize',
-                    bgcolor: 'divider',
-                    '&:hover': {
-                        bgcolor: 'primary.main',
-                    },
-                    flexShrink: 0
-                }}
-                onMouseDown={handleMouseDownLeft}
-            />
+            {/* Resizable Handle - Only show when not collapsed */}
+            {!isLeftPanelCollapsed && (
+                <Box
+                    sx={{
+                        width: '4px',
+                        height: '100%',
+                        cursor: 'col-resize',
+                        bgcolor: 'divider',
+                        '&:hover': {
+                            bgcolor: 'primary.main',
+                        },
+                        flexShrink: 0
+                    }}
+                    onMouseDown={handleMouseDownLeft}
+                />
+            )}
 
             {/* Center Panel */}
             <Box sx={{ 
@@ -118,30 +168,79 @@ const ResizableLayout: React.FC<ResizableLayoutProps> = ({
             {/* Right Panel and Handle */}
             {isRightPanelVisible && (
                 <>
-                    <Box
-                        sx={{
-                            width: '4px',
-                            height: '100%',
-                            cursor: 'col-resize',
-                            bgcolor: 'divider',
-                            '&:hover': {
-                                bgcolor: 'primary.main',
-                            },
-                            flexShrink: 0
-                        }}
-                        onMouseDown={handleMouseDownRight}
-                    />
+                    {/* Right Resizable Handle - Only show when not collapsed */}
+                    {!isRightPanelCollapsed && (
+                        <Box
+                            sx={{
+                                width: '4px',
+                                height: '100%',
+                                cursor: 'col-resize',
+                                bgcolor: 'divider',
+                                '&:hover': {
+                                    bgcolor: 'primary.main',
+                                },
+                                flexShrink: 0
+                            }}
+                            onMouseDown={handleMouseDownRight}
+                        />
+                    )}
                     <Box sx={{ 
-                        width: rightWidth,
+                        width: isRightPanelCollapsed ? '50px' : rightWidth,
                         height: '100%',
                         overflow: 'hidden',
                         borderLeft: 1,
                         borderColor: 'divider',
                         position: 'relative',
                         transition: 'width 0.3s ease',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        backgroundColor: 'background.paper'
                     }}>
-                        {rightPanel}
+                        {isRightPanelCollapsed ? (
+                            <Box sx={{ 
+                                display: 'flex', 
+                                justifyContent: 'center', 
+                                alignItems: 'flex-start',
+                                pt: 2,
+                                position: 'relative'
+                            }}>
+                                <IconButton 
+                                    onClick={onRightToggle} 
+                                    size="small"
+                                    sx={{
+                                        '&:hover': {
+                                            transform: 'scale(1.1) rotate(-45deg)',
+                                            transition: 'all 0.2s ease'
+                                        }
+                                    }}
+                                >
+                                    <Box sx={{ 
+                                        transform: 'rotate(-45deg)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'transform 0.2s ease'
+                                    }}>
+                                        <Box 
+                                            component="img" 
+                                            src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" 
+                                            sx={{ 
+                                                width: 24, 
+                                                height: 24,
+                                                filter: 'grayscale(1) brightness(0.7)',
+                                                transition: 'filter 0.2s ease',
+                                                '&:hover': {
+                                                    filter: 'grayscale(0) brightness(1)'
+                                                }
+                                            }} 
+                                        />
+                                    </Box>
+                                </IconButton>
+                            </Box>
+                        ) : (
+                            <>
+                                {rightPanel}
+                            </>
+                        )}
                     </Box>
                 </>
             )}
