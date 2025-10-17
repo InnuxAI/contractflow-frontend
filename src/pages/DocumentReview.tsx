@@ -66,7 +66,7 @@ const DocumentReview: React.FC = () => {
                 const updatedDoc = await getDocument(data.document_id);
     
                 const updatedApproverEmails = updatedDoc.approvers
-                    ? await Promise.all(updatedDoc.approvers.map(async id => {
+                    ? await Promise.all(updatedDoc.approvers.map(async (id: string) => {
                         try {
                             const user = await getUserById(id);
                             return user.email;
@@ -99,9 +99,9 @@ const DocumentReview: React.FC = () => {
             try {
                 const docs = await getDocuments();
                 // For each document, fetch approver emails
-                const docsWithEmails = await Promise.all(docs.map(async (doc) => {
+                const docsWithEmails = await Promise.all(docs.map(async (doc: Document) => {
                     if (doc.approvers && doc.approvers.length > 0) {
-                        const approverUsers = await Promise.all(doc.approvers.map(async (id) => {
+                        const approverUsers = await Promise.all(doc.approvers.map(async (id: string) => {
                             try {
                                 const user = await getUserById(id);
                                 return user.email;
@@ -136,7 +136,7 @@ const DocumentReview: React.FC = () => {
             let approverEmails: string[] = [];
             if (refreshedDoc.approvers && refreshedDoc.approvers.length > 0) {
                 approverEmails = await Promise.all(
-                    refreshedDoc.approvers.map(async (id) => {
+                    refreshedDoc.approvers.map(async (id: string) => {
                         try {
                             const user = await getUserById(id);
                             return user.email;

@@ -87,7 +87,7 @@ const Dashboard: React.FC = () => {
                 const updatedDoc = await getDocument(data.document_id);
     
                 const updatedApproverEmails = updatedDoc.approvers
-                    ? await Promise.all(updatedDoc.approvers.map(async id => {
+                    ? await Promise.all(updatedDoc.approvers.map(async (id: string) => {
                         try {
                             const user = await getUserById(id);
                             return user.email;
@@ -124,7 +124,7 @@ const Dashboard: React.FC = () => {
             let approverEmails: string[] = [];
             if (refreshedDoc.approvers && refreshedDoc.approvers.length > 0) {
                 approverEmails = await Promise.all(
-                    refreshedDoc.approvers.map(async (id) => {
+                    refreshedDoc.approvers.map(async (id: string) => {
                         try {
                             const user = await getUserById(id);
                             return user.email;
