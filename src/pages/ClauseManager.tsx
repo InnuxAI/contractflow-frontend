@@ -137,7 +137,7 @@
 
 //     const fetchClauses = async () => {
 //         try {
-//             const response = await axios.get<Clause[]>('http://127.0.0.1:8000/api/clauses');
+//             const response = await axios.get<Clause[]>('http://127.0.0.1:8002/api/clauses');
 //             setClauses(response.data);
 //             const uniqueDomains = Array.from(new Set(response.data.map(clause => clause.domain)));
 //             setDomains(['All', ...uniqueDomains]);
@@ -155,14 +155,14 @@
 //         e.preventDefault();
 //         try {
 //             if (editingClause) {
-//                 await axios.put(`http://127.0.0.1:8000/api/clauses/${editingClause.id}`, newClause);
+//                 await axios.put(`http://127.0.0.1:8002/api/clauses/${editingClause.id}`, newClause);
 //                 setSnackbar({
 //                     open: true,
 //                     message: 'Clause updated successfully',
 //                     severity: 'success'
 //                 });
 //             } else {
-//                 await axios.post('http://127.0.0.1:8000/api/clauses', newClause);
+//                 await axios.post('http://127.0.0.1:8002/api/clauses', newClause);
 //                 setSnackbar({
 //                     open: true,
 //                     message: 'Clause created successfully',
@@ -207,7 +207,7 @@
 //         if (!clauseToDelete) return;
 
 //         try {
-//             await axios.delete(`http://127.0.0.1:8000/api/clauses/${clauseToDelete}`);
+//             await axios.delete(`http://127.0.0.1:8002/api/clauses/${clauseToDelete}`);
 //             fetchClauses();
 //             setSnackbar({
 //                 open: true,
@@ -1192,7 +1192,7 @@ interface Clause {
   last_modified: string;
 }
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8002';
 
 const ClauseManager: React.FC = () => {
   // ====================
@@ -1205,14 +1205,19 @@ const ClauseManager: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Add Clause modal
+  // Add/Edit Clause modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingClause, setEditingClause] = useState<Clause | null>(null);
   const [newClause, setNewClause] = useState({
     title: "",
     description: "",
     domain: "Legal",
   });
   const [creating, setCreating] = useState(false);
+
+  // Delete confirmation modal
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clauseToDelete, setClauseToDelete] = useState<string | null>(null);
 
   // ====================
   // Effects
@@ -1250,24 +1255,72 @@ const ClauseManager: React.FC = () => {
     }
     try {
       setCreating(true);
-      const res = await axios.post<Clause>(
-        `${API_URL}/api/clauses`,
-        newClause
-      );
+      
+      if (editingClause) {
+        // Update existing clause
+        const res = await axios.put<Clause>(
+          `${API_URL}/api/clauses/${editingClause.id}`,
+          newClause
+        );
+        setClauses((prev) =>
+          prev.map((c) => (c.id === editingClause.id ? res.data : c))
+        );
+      } else {
+        // Create new clause
+        const res = await axios.post<Clause>(
+          `${API_URL}/api/clauses`,
+          newClause
+        );
+        setClauses((prev) => [...prev, res.data]);
+      }
 
-      setClauses((prev) => [...prev, res.data]);
-      if (!domains.includes(res.data.domain)) {
-        setDomains((prev) => [...prev, res.data.domain]);
+      if (!domains.includes(newClause.domain)) {
+        setDomains((prev) => [...prev, newClause.domain]);
       }
 
       setNewClause({ title: "", description: "", domain: "Legal" });
+      setEditingClause(null);
       setError("");
-      setIsModalOpen(false); // close modal
+      setIsModalOpen(false);
     } catch (err) {
-      console.error("Error creating clause:", err);
-      setError("Failed to create clause");
+      console.error("Error saving clause:", err);
+      setError(editingClause ? "Failed to update clause" : "Failed to create clause");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleEditClause = (clause: Clause, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingClause(clause);
+    setNewClause({
+      title: clause.title,
+      description: clause.description,
+      domain: clause.domain,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (clauseId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setClauseToDelete(clauseId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clauseToDelete) return;
+
+    try {
+      await axios.delete(`${API_URL}/api/clauses/${clauseToDelete}`);
+      setClauses((prev) => prev.filter((c) => c.id !== clauseToDelete));
+      setDeleteDialogOpen(false);
+      setClauseToDelete(null);
+      setError("");
+    } catch (err) {
+      console.error("Error deleting clause:", err);
+      setError("Failed to delete clause");
+      setDeleteDialogOpen(false);
+      setClauseToDelete(null);
     }
   };
 
@@ -1327,7 +1380,14 @@ const ClauseManager: React.FC = () => {
         </h1>
 
         {/* Add Clause Button */}
-        <button className="add-clause-btn modal-title" onClick={() => setIsModalOpen(true)}>
+        <button
+          className="add-clause-btn modal-title"
+          onClick={() => {
+            setEditingClause(null);
+            setNewClause({ title: "", description: "", domain: "Legal" });
+            setIsModalOpen(true);
+          }}
+        >
           + Add Clause
         </button>
 
@@ -1344,8 +1404,20 @@ const ClauseManager: React.FC = () => {
                 <div className="card-header">
                   <h3>{clause.title}</h3>
                   <div className="card-actions">
-                    <button className="icon-btn edit">✎</button>
-                    <button className="icon-btn delete">🗑</button>
+                    <button
+                      className="icon-btn edit"
+                      onClick={(e) => handleEditClause(clause, e)}
+                      title="Edit clause"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      className="icon-btn delete"
+                      onClick={(e) => handleDeleteClick(clause.id, e)}
+                      title="Delete clause"
+                    >
+                      🗑
+                    </button>
                   </div>
                 </div>
                 <span
@@ -1397,14 +1469,21 @@ const ClauseManager: React.FC = () => {
         </div>
       )}
 
-      {/* Add Clause Modal */}
+      {/* Add/Edit Clause Modal */}
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
+        <div
+          className="modal-backdrop"
+          onClick={() => {
+            setIsModalOpen(false);
+            setEditingClause(null);
+            setNewClause({ title: "", description: "", domain: "Legal" });
+          }}
+        >
           <div
             className="modal form-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2>Add New Clause</h2>
+            <h2>{editingClause ? "Edit Clause" : "Add New Clause"}</h2>
 
             <div className="form-group">
               <label htmlFor="new-clause-title">Title</label>
@@ -1461,13 +1540,61 @@ const ClauseManager: React.FC = () => {
                 onClick={handleCreateClause}
                 disabled={creating}
               >
-                {creating ? "Creating..." : "Add Clause"}
+                {creating
+                  ? editingClause
+                    ? "Updating..."
+                    : "Creating..."
+                  : editingClause
+                  ? "Update Clause"
+                  : "Add Clause"}
               </button>
               <button
                 className="btn-cancel"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingClause(null);
+                  setNewClause({ title: "", description: "", domain: "Legal" });
+                }}
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteDialogOpen && (
+        <div
+          className="modal-backdrop"
+          onClick={() => {
+            setDeleteDialogOpen(false);
+            setClauseToDelete(null);
+          }}
+        >
+          <div className="modal delete-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>⚠️ Delete Clause</h2>
+            <p className="delete-modal-text">
+              Are you sure you want to delete this clause?
+            </p>
+            <p className="delete-modal-warning">
+              <strong>This action is irreversible and cannot be undone.</strong>
+            </p>
+            <div className="modal-buttons">
+              <button
+                className="btn-cancel"
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setClauseToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-delete"
+                onClick={confirmDelete}
+              >
+                Delete
               </button>
             </div>
           </div>

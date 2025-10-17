@@ -13,7 +13,7 @@ import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import './AIChatSidebar.css';
 import { useDocument } from '../../contexts/DocumentContext';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8002';
 
 interface ChatMessage {
     message: string;

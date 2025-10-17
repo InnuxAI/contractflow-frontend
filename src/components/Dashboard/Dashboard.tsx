@@ -25,7 +25,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import SendIcon from '@mui/icons-material/Send';
 import { getUserById } from '../../services/api';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8002';
 
 interface TabPanelProps {
     children?: React.ReactNode;
