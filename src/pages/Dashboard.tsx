@@ -391,235 +391,193 @@ const Dashboard: React.FC = () => {
                 </Grid>
             </Grid>
 
-            <Grid container spacing={3}>
-                {/* Left Card - My Documents */}
-                <Grid item xs={12} md={6}>
+            {/* My Documents Section - Full Width */}
+            <Box sx={{ mb: 3 }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    mb: 2
+                }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                        My Documents
+                    </Typography>
+                    <Chip 
+                        label={`${getMyDocuments().length} ${getMyDocuments().length === 1 ? 'Document' : 'Documents'}`}
+                        color="primary" 
+                        size="medium"
+                        sx={{ fontWeight: 600 }}
+                    />
+                </Box>
+
+                {/* Sort Filters */}
+                <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel>Sort By</InputLabel>
+                        <Select
+                            value={sortBy}
+                            label="Sort By"
+                            onChange={(e) => setSortBy(e.target.value as 'priority' | 'deadline' | 'alphabetical')}
+                        >
+                            <MenuItem value="deadline">Deadline</MenuItem>
+                            <MenuItem value="priority">Priority</MenuItem>
+                            <MenuItem value="alphabetical">Alphabetical</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 100 }}>
+                        <InputLabel>Order</InputLabel>
+                        <Select
+                            value={sortOrder}
+                            label="Order"
+                            onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                        >
+                            <MenuItem value="asc">Ascending</MenuItem>
+                            <MenuItem value="desc">Descending</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Box>
+
+                {getMyDocuments().length === 0 ? (
                     <Paper sx={{ 
-                        height: '500px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        p: 3, 
+                        p: 6, 
                         borderRadius: 2, 
                         backgroundColor: 'background.paper',
                         border: 1,
-                        borderColor: 'divider'
+                        borderColor: 'divider',
+                        textAlign: 'center'
                     }}>
-                        <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            mb: 2
-                        }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                My Documents
-                            </Typography>
-                            <Chip 
-                                label={getMyDocuments().length} 
-                                color="primary" 
-                                size="small"
-                                sx={{ fontWeight: 600 }}
-                            />
-                        </Box>
-
-                        {/* Sort Filters */}
-                        <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-                            <FormControl size="small" sx={{ minWidth: 120 }}>
-                                <InputLabel>Sort By</InputLabel>
-                                <Select
-                                    value={sortBy}
-                                    label="Sort By"
-                                    onChange={(e) => setSortBy(e.target.value as 'priority' | 'deadline' | 'alphabetical')}
-                                >
-                                    <MenuItem value="deadline">Deadline</MenuItem>
-                                    <MenuItem value="priority">Priority</MenuItem>
-                                    <MenuItem value="alphabetical">Alphabetical</MenuItem>
-                                </Select>
-                            </FormControl>
-                            <FormControl size="small" sx={{ minWidth: 100 }}>
-                                <InputLabel>Order</InputLabel>
-                                <Select
-                                    value={sortOrder}
-                                    label="Order"
-                                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                                >
-                                    <MenuItem value="asc">Ascending</MenuItem>
-                                    <MenuItem value="desc">Descending</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Box>
-
-                        {getMyDocuments().length === 0 ? (
-                            <Box sx={{ textAlign: 'center', py: 4, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
-                                <Typography variant="body1" color="text.secondary">
-                                    No documents requiring action
-                                </Typography>
-                            </Box>
-                        ) : (
-                            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>                                        {getMyDocuments().map((doc) => (
-                                    <Box
-                                        key={doc._id}
+                        <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+                        <Typography variant="body1" color="text.secondary">
+                            No documents requiring action
+                        </Typography>
+                    </Paper>
+                ) : (
+                    <Grid container spacing={2}>
+                        {getMyDocuments().map((doc) => {
+                            const dueDate = new Date(doc.date_review_due || doc.created_at);
+                            const today = new Date();
+                            const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+                            const isOverdue = daysOverdue > 0;
+                            
+                            return (
+                                <Grid item xs={12} sm={6} md={4} key={doc._id}>
+                                    <Paper
                                         sx={{
-                                            p: 2,
-                                            mb: 1,
-                                            borderRadius: 1,
-                                            backgroundColor: 'action.hover',
+                                            p: 2.5,
+                                            borderRadius: 2,
+                                            backgroundColor: 'background.paper',
                                             border: 1,
-                                            borderColor: 'divider',
+                                            borderColor: isOverdue ? 'error.main' : 'divider',
                                             cursor: 'pointer',
                                             transition: 'all 0.2s ease',
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            position: 'relative',
                                             '&:hover': {
-                                                backgroundColor: 'action.selected',
-                                                transform: 'translateX(4px)',
+                                                backgroundColor: 'action.hover',
+                                                transform: 'translateY(-4px)',
+                                                boxShadow: 3,
                                             }
                                         }}
                                         onClick={() => navigate('/document-review')}
                                     >
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Box>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                                    {doc.title.split('.')[0]}
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                    <StatusPill status={doc.status} />
-                                                    {doc.priority && (
-                                                        <Chip 
-                                                            label={doc.priority.toUpperCase()} 
-                                                            size="small" 
-                                                            sx={{ 
-                                                                fontSize: '0.65rem', 
-                                                                height: '20px',
-                                                                backgroundColor: doc.priority === 'urgent' ? '#ff5722' : '#4caf50',
-                                                                color: '#ffffff',
-                                                                fontWeight: 600,
-                                                                '&:hover': {
-                                                                    backgroundColor: doc.priority === 'urgent' ? '#d32f2f' : '#388e3c',
-                                                                }
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                                {doc.date_review_due && (
-                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                                                        Due: {new Date(doc.date_review_due).toLocaleDateString()}
-                                                    </Typography>
-                                                )}
+                                        {isOverdue && (
+                                            <Box
+                                                sx={{
+                                                    position: 'absolute',
+                                                    top: 8,
+                                                    right: 8,
+                                                    color: 'error.main',
+                                                }}
+                                            >
+                                                ⚠️
                                             </Box>
-                                            <DocumentIcon color="action" />
+                                        )}
+                                        
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                                            <DocumentIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+                                            <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
+                                                {doc.title.split('.')[0]}
+                                            </Typography>
                                         </Box>
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
+                                        
+                                        <Box sx={{ mb: 1.5 }}>
+                                            <StatusPill status={doc.status} />
+                                            {doc.priority && (
+                                                <Chip 
+                                                    label={doc.priority.toUpperCase()} 
+                                                    size="small" 
+                                                    sx={{ 
+                                                        ml: 1,
+                                                        fontSize: '0.65rem', 
+                                                        height: '22px',
+                                                        backgroundColor: doc.priority === 'urgent' ? '#ff5722' : '#4caf50',
+                                                        color: '#ffffff',
+                                                        fontWeight: 600,
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
 
-                        {getMyDocuments().length > 0 && (
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                onClick={() => navigate('/document-review')}
-                            >
-                                Go to Document Review
-                            </Button>
-                        )}
-                    </Paper>
-                </Grid>
-
-                {/* Right Card - New Documents */}
-                <Grid item xs={12} md={6}>
-                    <Paper sx={{ 
-                        height: '500px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        p: 3, 
-                        borderRadius: 2, 
-                        backgroundColor: 'background.paper',
-                        border: 1,
-                        borderColor: 'divider'
-                    }}>
-                        <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            mb: 3
-                        }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                New Documents
-                            </Typography>
-                            <Chip 
-                                label={getNewDocuments().length} 
-                                color="primary" 
-                                size="small"
-                                sx={{ fontWeight: 600 }}
-                            />
-                        </Box>
-
-                        {getNewDocuments().length === 0 ? (
-                            <Box sx={{ textAlign: 'center', py: 4, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <DocumentIcon sx={{ fontSize: 64, color: 'action.disabled', mb: 2 }} />
-                                <Typography variant="body1" color="text.secondary">
-                                    No new documents
-                                </Typography>
-                            </Box>
-                        ) : (
-                            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>                                        {getNewDocuments().map((doc) => (
-                                    <Box
-                                        key={doc._id}
-                                        sx={{
-                                            p: 2,
-                                            mb: 1,
-                                            borderRadius: 1,
-                                            backgroundColor: 'action.hover',
-                                            border: 1,
-                                            borderColor: 'divider',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease',
-                                            '&:hover': {
-                                                backgroundColor: 'action.selected',
-                                                transform: 'translateX(4px)',
-                                            }
-                                        }}
-                                        onClick={() => navigate('/document-review')}
-                                    >
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Box>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                                    {doc.title.split('.')[0]}
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                    <StatusPill status={doc.status} />
-                                                    {doc.priority && (
-                                                        <Chip 
-                                                            label={doc.priority.toUpperCase()} 
-                                                            size="small" 
-                                                            sx={{ 
-                                                                fontSize: '0.65rem', 
-                                                                height: '20px',
-                                                                backgroundColor: doc.priority === 'urgent' ? '#ff5722' : '#4caf50',
-                                                                color: '#ffffff',
-                                                                fontWeight: 600,
-                                                                '&:hover': {
-                                                                    backgroundColor: doc.priority === 'urgent' ? '#d32f2f' : '#388e3c',
-                                                                }
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                                {doc.date_received && (
-                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                                                        Received: {new Date(doc.date_received).toLocaleDateString()}
+                                        <Box sx={{ mt: 'auto' }}>
+                                            {doc.date_review_due && (
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                                    <Typography 
+                                                        variant="body2" 
+                                                        color={isOverdue ? 'error.main' : 'text.secondary'}
+                                                        sx={{ fontWeight: isOverdue ? 600 : 400 }}
+                                                    >
+                                                        📅 Due: {dueDate.toLocaleDateString()}
                                                     </Typography>
-                                                )}
-                                            </Box>
-                                            <DocumentIcon color="action" />
+                                                </Box>
+                                            )}
+                                            
+                                            {isOverdue && (
+                                                <Typography 
+                                                    variant="caption" 
+                                                    color="error.main"
+                                                    sx={{ 
+                                                        display: 'block',
+                                                        fontWeight: 600 
+                                                    }}
+                                                >
+                                                    {daysOverdue} {daysOverdue === 1 ? 'day' : 'days'} overdue
+                                                </Typography>
+                                            )}
+
+                                            {doc.reviewer_id && (
+                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                                    👤 Assigned: {doc.reviewer_id}
+                                                </Typography>
+                                            )}
+                                            
+                                            {doc.created_at && (
+                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                                    📝 Created: {new Date(doc.created_at).toLocaleDateString()}
+                                                </Typography>
+                                            )}
                                         </Box>
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
-                    </Paper>
-                </Grid>
-            </Grid>
+                                    </Paper>
+                                </Grid>
+                            );
+                        })}
+                    </Grid>
+                )}
+
+                {getMyDocuments().length > 0 && (
+                    <Box sx={{ mt: 3, textAlign: 'center' }}>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            sx={{ px: 4 }}
+                            onClick={() => navigate('/document-review')}
+                        >
+                            Go to Document Review
+                        </Button>
+                    </Box>
+                )}
+            </Box>
 
         </Box>
     );

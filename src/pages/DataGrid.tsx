@@ -21,6 +21,8 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+
 interface Clause {
     id: string;
     title: string;
@@ -146,7 +148,7 @@ const ClauseManager: React.FC = () => {
 
     const fetchClauses = async () => {
         try {
-            const response = await axios.get<Clause[]>('http://127.0.0.1:8000/api/clauses');
+            const response = await axios.get<Clause[]>(`${API_URL}/api/clauses`);
             setClauses(response.data);
             const uniqueDomains = Array.from(new Set(response.data.map(clause => clause.domain)));
             setDomains(uniqueDomains);
@@ -164,14 +166,14 @@ const ClauseManager: React.FC = () => {
         e.preventDefault();
         try {
             if (editingClause) {
-                await axios.put(`http://127.0.0.1:8000/api/clauses/${editingClause.id}`, newClause);
+                await axios.put(`${API_URL}/api/clauses/${editingClause.id}`, newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause updated successfully',
                     severity: 'success'
                 });
             } else {
-                await axios.post('http://127.0.0.1:8000/api/clauses', newClause);
+                await axios.post(`${API_URL}/api/clauses`, newClause);
                 setSnackbar({
                     open: true,
                     message: 'Clause created successfully',
@@ -203,7 +205,7 @@ const ClauseManager: React.FC = () => {
         try {
             await Promise.all(
                 clausesToDelete.map(id => 
-                    axios.delete(`http://127.0.0.1:8000/api/clauses/${id}`)
+                    axios.delete(`${API_URL}/api/clauses/${id}`)
                 )
             );
             fetchClauses();
@@ -319,6 +321,7 @@ const ClauseManager: React.FC = () => {
             display: 'flex',
             height: 'calc(100vh - 64px)',
             backgroundColor: theme.palette.background.default,
+            pb: 3,
         }}>
             {/* Main Content */}
             <Box
@@ -374,27 +377,19 @@ const ClauseManager: React.FC = () => {
                         width: '100%',
                         borderRadius: 2,
                         overflow: 'hidden',
+                        mb: 3,
                     }}
                 >
                     <DataGrid
                         rows={clauses}
                         columns={columns}
-                        pageSizeOptions={[5, 10, 25, 50]}
-                        initialState={{
-                            pagination: {
-                                paginationModel: { pageSize: pageSize },
-                            },
-                            filter: {
-                                filterModel: {
-                                    items: [],
-                                },
-                            },
-                        }}
-                        onPaginationModelChange={(params) => setPageSize(params.pageSize)}
+                        pageSize={pageSize}
+                        onPageSizeChange={(newPageSize: number) => setPageSize(newPageSize)}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
                         checkboxSelection
-                        disableRowSelectionOnClick
-                        onRowSelectionModelChange={(ids) => {
-                            const selectedIDs = new Set((ids as unknown as string[]));
+                        disableSelectionOnClick
+                        onSelectionModelChange={(ids: unknown) => {
+                            const selectedIDs = new Set((ids as string[]));
                             const selected = clauses.filter((row) => selectedIDs.has(row.id));
                             setSelectedRows(selected);
                         }}

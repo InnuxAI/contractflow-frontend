@@ -1,0 +1,372 @@
+:root {
+  --bg: #0f1116;
+  --card-bg: #1c1e23;
+  --sidebar-bg: #181a1f;
+  --border: #2b2f35;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #22c55e;
+  --error: #ef4444;
+}
+
+body, html {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.clause-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+}
+
+.domain-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.domain-item:hover {
+  background: #22242b;
+}
+
+.domain-item.active {
+  background: var(--accent);
+}
+
+.domain-item.active,
+.domain-item.active .count {
+  color: white;
+}
+
+.domain-item .count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Main content */
+.main-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.main-content h1 {
+  font-size: 1.75rem;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Grid + Cards */
+.clauses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+  margin-bottom: 4rem;
+}
+
+.clause-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  transition: all 0.2s ease;
+}
+
+.clause-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Action Buttons */
+.card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+}
+
+.icon-btn.edit:hover {
+  color: var(--accent);
+}
+
+.icon-btn.delete:hover {
+  color: var(--error);
+}
+
+/* Domain pill */
+.domain-pill {
+  display: inline-block;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin: 10px 0;
+}
+
+/* Description */
+.card-description {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Metadata */
+.card-meta {
+  font-size: 0.75rem;
+  color: #a1a1aa;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  line-height: 1.4;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.modal-domain {
+  display: inline-block;
+  color: white;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.modal-description {
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.modal-meta {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.modal button {
+  margin-top: 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal button:hover {
+  background: var(--accent-hover);
+}
+
+.new-clause-form {
+  margin-bottom: 24px;
+  padding: 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.new-clause-form h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+.new-clause-form input,
+.new-clause-form textarea,
+.new-clause-form select {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.new-clause-form button {
+  background: var(--success);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.new-clause-form button:hover {
+  background: #16a34a;
+}
+
+/* Form Modal Specific */
+.form-modal {
+  width: 500px;
+  max-width: 90%;
+  padding: 30px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-modal h2 {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-cancel {
+  background: var(--error);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #c00000;
+}
+
+.modal-title {
+  margin-bottom: 20px; /* adjust the value as needed */
+}

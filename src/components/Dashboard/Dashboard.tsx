@@ -25,6 +25,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import SendIcon from '@mui/icons-material/Send';
 import { getUserById } from '../../services/api';
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+
 interface TabPanelProps {
     children?: React.ReactNode;
     index: number;
@@ -78,7 +80,8 @@ const Dashboard: React.FC = () => {
         severity: 'success'
     });
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8000/ws");
+        const wsUrl = API_URL.replace('https://', 'wss://').replace('http://', 'ws://');
+        const ws = new WebSocket(`${wsUrl}/ws`);
     
         ws.onmessage = async (event) => {
             const data = JSON.parse(event.data);
@@ -270,7 +273,7 @@ const Dashboard: React.FC = () => {
 
             // Send document to sathish@gmail.com
             try {
-                await fetch('http://127.0.0.1:8000/api/documents/send-email', {
+                await fetch(`${API_URL}/api/documents/send-email`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

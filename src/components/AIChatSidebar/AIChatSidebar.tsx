@@ -13,6 +13,8 @@ import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import './AIChatSidebar.css';
 import { useDocument } from '../../contexts/DocumentContext';
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+
 interface ChatMessage {
     message: string;
     sender: 'user' | 'ai';
@@ -82,7 +84,7 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({ onToggle }) => {
 
             console.log('Sending request with body:', requestBody);
 
-            const response = await fetch('http://127.0.0.1:8000/api/chat', {
+            const response = await fetch(`${API_URL}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -185,7 +187,7 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({ onToggle }) => {
                 document_id: currentDocument._id,
             };
 
-            const response = await fetch('http://127.0.0.1:8000/api/compliance', {
+            const response = await fetch(`${API_URL}/api/compliance`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
