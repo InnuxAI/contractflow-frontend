@@ -245,9 +245,11 @@ const DocumentReview: React.FC = () => {
             // First save the document content
             await editorRef.current.save();
             
-            // Update document status and add note about sending to sathish@gmail.com
+            // Update document status with changes summary
             await updateDocument(currentDocument._id, {
-                status: 'with_approver'
+                status: 'with_approver',
+                changes_summary: 'Document reviewed and ready for approval',
+                notes: 'Document sent to approver'
             });
 
             // Refresh the document and trigger list refresh
@@ -258,11 +260,12 @@ const DocumentReview: React.FC = () => {
                 message: 'Document Sent to Approver',
                 severity: 'success'
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to send document to approver:', error);
+            const errorMessage = error.response?.data?.detail || error.message || 'Failed to send document to approver';
             setSnackbar({
                 open: true,
-                message: 'Failed to send document to approver',
+                message: errorMessage,
                 severity: 'error'
             });
         }
